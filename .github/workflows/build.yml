@@ -47,19 +47,25 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # --- تنظیمات امضا با کلید شما ---
-      - name: Setup Keystore
+      # --- ساخت خودکار کلید استاندارد و امضا ---
+      - name: Generate Standard Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-release-key.jks
-          
-      - name: Sign APK with apksigner
+          keytool -genkeypair -v \
+            -keystore my-release-key.jks \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -alias my-key-alias \
+            -storepass Kabab123! \
+            -keypass Kabab123! \
+            -dname "CN=SieveAnalysis, OU=Dev, O=MyOrg, L=Tehran, S=Tehran, C=IR"
+
+      - name: Sign APK
         run: |
           BUILD_TOOLS_PATH=$(find $ANDROID_HOME/build-tools -name "apksigner" -type f | head -n 1)
           
           $BUILD_TOOLS_PATH sign --ks my-release-key.jks \
-            --ks-pass pass:${{ secrets.RELEASE_STORE_PASSWORD }} \
-            --key-pass pass:${{ secrets.RELEASE_KEY_PASSWORD }} \
-            --ks-key-alias ${{ secrets.RELEASE_KEY_ALIAS }} \
+            --ks-pass pass:Kabab123! \
+            --key-pass pass:Kabab123! \
+            --ks-key-alias my-key-alias \
             --out android/app/build/outputs/apk/debug/app-release-signed.apk \
             android/app/build/outputs/apk/debug/app-debug.apk
 
