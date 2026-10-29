@@ -1,0 +1,71 @@
+name: Build and Sign Sieve Analysis APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare web app
+        run: |
+          mkdir -p www
+          cp index.html www/
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/android@6
+          npm install --save-dev @capacitor/cli@6
+          npm install @bcyesil/capacitor-plugin-printer@0.0.5
+
+      - name: Configure Capacitor
+        run: |
+          npx cap init "Sieve Analysis" com.yourname.sieveanalysis --web-dir www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      # --- تنظیمات امضا با کلید شما ---
+      - name: Setup Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-release-key.jks
+          
+      - name: Sign APK with apksigner
+        run: |
+          BUILD_TOOLS_PATH=$(find $ANDROID_HOME/build-tools -name "apksigner" -type f | head -n 1)
+          
+          $BUILD_TOOLS_PATH sign --ks my-release-key.jks \
+            --ks-pass pass:${{ secrets.RELEASE_STORE_PASSWORD }} \
+            --key-pass pass:${{ secrets.RELEASE_KEY_PASSWORD }} \
+            --ks-key-alias ${{ secrets.RELEASE_KEY_ALIAS }} \
+            --out android/app/build/outputs/apk/debug/app-release-signed.apk \
+            android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sieve-Analysis-Release
+          path: android/app/build/outputs/apk/debug/app-release-signed.apk
+          if-no-files-found: error
