@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and Sign Sieve Analysis
+    name: Build APK, AAB and Cafe Bazaar BIN
     runs-on: ubuntu-22.04
 
     steps:
@@ -29,8 +29,10 @@ jobs:
 
       - name: Prepare web app
         run: |
+          set -eu
           mkdir -p www
           cp index.html www/
+
           npm init -y
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6
@@ -38,10 +40,25 @@ jobs:
 
       - name: Configure Capacitor
         run: |
+          set -eu
           npx cap init "Sieve Analysis" com.yourname.sieveanalysis --web-dir www
           npx cap add android
           npx cap sync android
 
+      # APK for testing on Android
+      - name: Build Debug APK
+        run: |
+          set -eu
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          cd ..
+          mkdir -p output
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+             output/Sieve-Analysis-debug.apk
+
+      # Restore the persistent keystore created on your phone
       - name: Restore persistent signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
@@ -49,7 +66,7 @@ jobs:
           set -eu
 
           test -n "$KEYSTORE_BASE64" || {
-            echo "ERROR: Missing SIGNING_KEYSTORE_BASE64"
+            echo "Missing SIGNING_KEYSTORE_BASE64 secret"
             exit 1
           }
 
@@ -58,49 +75,33 @@ jobs:
 
           test -s android/app/release-key.jks
 
+      # Configure Gradle to sign the release AAB with the saved key
       - name: Configure release signing
         run: |
+          set -eu
+
           python3 - <<'PY'
           from pathlib import Path
 
           path = Path("android/app/build.gradle")
           if not path.is_file():
-              raise SystemExit(
-                  "ERROR: android/app/build.gradle not found"
-              )
+              raise SystemExit("android/app/build.gradle not found")
 
           content = path.read_text()
 
           if "signingConfigs {" in content:
               raise SystemExit(
-                  "ERROR: Existing signingConfigs found; "
-                  "refusing to modify the file automatically"
+                  "Signing configuration already exists; "
+                  "inspect build.gradle before continuing."
               )
 
-          build_types = content.find("buildTypes {")
-          if build_types < 0:
-              raise SystemExit("ERROR: buildTypes block not found")
+          marker = "buildTypes {"
+          pos = content.find(marker)
 
-          release = content.find("release {", build_types)
-          if release < 0:
-              raise SystemExit("ERROR: release build type not found")
+          if pos < 0:
+              raise SystemExit("buildTypes block not found")
 
-          line_start = content.rfind("\n", 0, release) + 1
-          release_line = content[line_start:content.find("\n", release)]
-          indent = release_line[:len(release_line) -
-                                len(release_line.lstrip())]
-
-          signing_line = (
-              indent + "    signingConfig signingConfigs.release\n"
-          )
-
-          content = (
-              content[:release + len("release {")] +
-              "\n" + signing_line +
-              content[release + len("release {"):]
-          )
-
-          signing_block = """
+          signing_block = '''
               signingConfigs {
                   release {
                       storeFile file("release-key.jks")
@@ -110,17 +111,31 @@ jobs:
                   }
               }
 
-          """
+          '''
 
-          build_types = content.find("buildTypes {")
+          content = content[:pos] + signing_block + content[pos:]
+
+          # Add the signing configuration to the release build type.
+          pos = content.find(marker)
+          release_pos = content.find("release {", pos)
+
+          if release_pos < 0:
+              raise SystemExit("release build type not found")
+
+          brace = content.find("{", release_pos)
+          line_end = content.find("\n", brace)
+
+          if line_end < 0:
+              raise SystemExit("Could not locate release block")
+
           content = (
-              content[:build_types] +
-              signing_block +
-              content[build_types:]
+              content[:line_end + 1]
+              + "            signingConfig signingConfigs.release\n"
+              + content[line_end + 1:]
           )
 
           path.write_text(content)
-          print("Release signing configuration added.")
+          print("Release signing configured.")
           PY
 
       - name: Build signed release AAB
@@ -136,10 +151,12 @@ jobs:
           test -n "$SIGNING_KEY_PASSWORD"
 
           cd android
-          chmod +x gradlew
           ./gradlew bundleRelease
-
           test -s app/build/outputs/bundle/release/app-release.aab
+          cd ..
+
+          cp android/app/build/outputs/bundle/release/app-release.aab \
+             output/Sieve-Analysis.aab
 
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
@@ -159,8 +176,6 @@ jobs:
         run: |
           set -eu
 
-          mkdir -p output
-
           java -jar bundlesigner.jar genbin \
             --verbose \
             --bundle android/app/build/outputs/bundle/release/app-release.aab \
@@ -173,16 +188,14 @@ jobs:
             --ks-pass "env:KS_PASS" \
             --key-pass "env:KEY_PASS"
 
-          cp android/app/build/outputs/bundle/release/app-release.aab \
-            output/Sieve-Analysis.aab
-
-          echo "Generated output files:"
+          echo "Generated files:"
           find output -maxdepth 1 -type f -printf '%f\n'
 
           test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
           test -s output/Sieve-Analysis.aab
+          test -s output/Sieve-Analysis-debug.apk
 
-      - name: Upload Cafe Bazaar release files
+      - name: Upload all release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Sieve-Analysis-CafeBazaar
