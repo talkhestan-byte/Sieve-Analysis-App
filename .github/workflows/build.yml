@@ -1,4 +1,5 @@
-name: Build and Sign Sieve Analysis APK
+
+name: Build Sieve Analysis for Cafe Bazaar
 
 on:
   workflow_dispatch:
@@ -8,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build and Sign Sieve Analysis
     runs-on: ubuntu-22.04
 
     steps:
@@ -41,37 +42,149 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Restore persistent signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
         run: |
+          set -eu
+
+          test -n "$KEYSTORE_BASE64" || {
+            echo "ERROR: Missing SIGNING_KEYSTORE_BASE64"
+            exit 1
+          }
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > android/app/release-key.jks
+
+          test -s android/app/release-key.jks
+
+      - name: Configure release signing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("android/app/build.gradle")
+          if not path.is_file():
+              raise SystemExit(
+                  "ERROR: android/app/build.gradle not found"
+              )
+
+          content = path.read_text()
+
+          if "signingConfigs {" in content:
+              raise SystemExit(
+                  "ERROR: Existing signingConfigs found; "
+                  "refusing to modify the file automatically"
+              )
+
+          build_types = content.find("buildTypes {")
+          if build_types < 0:
+              raise SystemExit("ERROR: buildTypes block not found")
+
+          release = content.find("release {", build_types)
+          if release < 0:
+              raise SystemExit("ERROR: release build type not found")
+
+          line_start = content.rfind("\n", 0, release) + 1
+          release_line = content[line_start:content.find("\n", release)]
+          indent = release_line[:len(release_line) -
+                                len(release_line.lstrip())]
+
+          signing_line = (
+              indent + "    signingConfig signingConfigs.release\n"
+          )
+
+          content = (
+              content[:release + len("release {")] +
+              "\n" + signing_line +
+              content[release + len("release {"):]
+          )
+
+          signing_block = """
+              signingConfigs {
+                  release {
+                      storeFile file("release-key.jks")
+                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+                  }
+              }
+
+          """
+
+          build_types = content.find("buildTypes {")
+          content = (
+              content[:build_types] +
+              signing_block +
+              content[build_types:]
+          )
+
+          path.write_text(content)
+          print("Release signing configuration added.")
+          PY
+
+      - name: Build signed release AAB
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -eu
+
+          test -n "$SIGNING_STORE_PASSWORD"
+          test -n "$SIGNING_KEY_ALIAS"
+          test -n "$SIGNING_KEY_PASSWORD"
+
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew bundleRelease
 
-      # --- ساخت خودکار کلید استاندارد و امضا ---
-      - name: Generate Standard Keystore
+          test -s app/build/outputs/bundle/release/app-release.aab
+
+      - name: Download official Cafe Bazaar Bundle Signer
         run: |
-          keytool -genkeypair -v \
-            -keystore my-release-key.jks \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias my-key-alias \
-            -storepass Kabab123! \
-            -keypass Kabab123! \
-            -dname "CN=SieveAnalysis, OU=Dev, O=MyOrg, L=Tehran, S=Tehran, C=IR"
+          set -eu
 
-      - name: Sign APK
+          curl --fail --location --silent --show-error \
+            https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
+            --output bundlesigner.jar
+
+          test -s bundlesigner.jar
+
+      - name: Generate Cafe Bazaar BIN
+        env:
+          KS_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
-          BUILD_TOOLS_PATH=$(find $ANDROID_HOME/build-tools -name "apksigner" -type f | head -n 1)
-          
-          $BUILD_TOOLS_PATH sign --ks my-release-key.jks \
-            --ks-pass pass:Kabab123! \
-            --key-pass pass:Kabab123! \
-            --ks-key-alias my-key-alias \
-            --out android/app/build/outputs/apk/debug/app-release-signed.apk \
-            android/app/build/outputs/apk/debug/app-debug.apk
+          set -eu
 
-      - name: Upload Signed APK
+          mkdir -p output
+
+          java -jar bundlesigner.jar genbin \
+            --verbose \
+            --bundle android/app/build/outputs/bundle/release/app-release.aab \
+            --bin output \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --ks android/app/release-key.jks \
+            --ks-type PKCS12 \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "env:KS_PASS" \
+            --key-pass "env:KEY_PASS"
+
+          cp android/app/build/outputs/bundle/release/app-release.aab \
+            output/Sieve-Analysis.aab
+
+          echo "Generated output files:"
+          find output -maxdepth 1 -type f -printf '%f\n'
+
+          test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
+          test -s output/Sieve-Analysis.aab
+
+      - name: Upload Cafe Bazaar release files
         uses: actions/upload-artifact@v4
         with:
-          name: Sieve-Analysis-Release
-          path: android/app/build/outputs/apk/debug/app-release-signed.apk
+          name: Sieve-Analysis-CafeBazaar
+          path: output/*
           if-no-files-found: error
