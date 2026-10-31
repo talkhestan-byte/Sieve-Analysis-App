@@ -303,7 +303,6 @@ function calculate(){
 function drawChart(){
   const canvas=$('gradingChart');
   const wrap=canvas.parentElement;
-  // نمودار هم‌اندازه کارت؛ برچسب‌های الک در دو ردیف جا می‌گیرند
   const width=Math.max(280,wrap.clientWidth);
   const height=350;
   const dpr=Math.min(window.devicePixelRatio||1,3);
@@ -320,16 +319,19 @@ function drawChart(){
   const range=ranges[$('spClass').value]||{};
   const rangeKeys=Object.keys(range).map(Number);
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
-  // اولین الک با عبوری ۱۰۰٪ از سمت الک‌های ریزتر
   const firstFull=lastResult ? ascending.find(v=>lastResult.passing[String(v)]>=99.999999) : undefined;
-  // بازه به جای بزرگترین الک جدول، از اولین الک ۱۰۰٪ و انتهای حدود استاندارد تعیین می‌شود
-  const upper=Math.max(firstFull||0,...rangeKeys,9.5);
-  const lower=0.001;
-  const logLow=Math.log10(lower),logHigh=Math.log10(upper);
-  const xMin=logLow,xMax=logHigh;
+  let upper=Math.max(firstFull||0,...rangeKeys,9.5);
+
+  // حاشیه لگاریتمی متعادل در دو انتها: منحنی نه می‌چسبد و نه فاصله می‌گیرد
+  const dataLow=0.075;
+  const dataHigh=upper;
+  const logLow=Math.log10(dataLow);
+  const logHigh=Math.log10(dataHigh);
+  const pad=(logHigh-logLow)*0.06;
+  const xMin=logLow-pad,xMax=logHigh+pad;
   const x=v=>m.left+(Math.log10(Number(v))-xMin)/(xMax-xMin)*pw;
   const y=v=>m.top+(100-v)/100*ph;
-  const inside=v=>Number(v)>=lower&&Number(v)<=upper;
+  const inside=v=>Number(v)>=dataLow/1.15&&Number(v)<=dataHigh*1.15;
   const ticks=sieves.slice().reverse().filter(inside);
 
   c.font='10px Arial';c.textBaseline='middle';c.textAlign='right';
@@ -339,7 +341,6 @@ function drawChart(){
     c.moveTo(m.left,yy);c.lineTo(width-m.right,yy);c.stroke();
     c.fillStyle='#334155';c.fillText(String(p),m.left-9,yy);
   }
-  // خطوط عمودی سیاه و خط‌چین، تمام ارتفاع صفر تا صد
   c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
   ticks.forEach(s=>{
     c.beginPath();c.setLineDash([4,4]);c.lineWidth=.85;c.strokeStyle='#111827';
@@ -347,14 +348,13 @@ function drawChart(){
   });
   c.restore();c.setLineDash([]);
 
-  // برچسب نمره الک‌ها بالای نمودار، افقی و در دو ردیف برای جلوگیری از تداخل
   c.font='9px Arial';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#26374d';
   const placed=[[],[]];
   ticks.forEach(s=>{
     const label=sieveLabels[s]||s,xx=x(s);
     const half=c.measureText(label).width/2+4;
     let row=placed.findIndex(items=>items.every(p=>Math.abs(p.x-xx)>p.half+half));
-    if(row<0)return; // روی عرض‌های خیلی کم، برچسب‌های هم‌پوشان حذف می‌شوند
+    if(row<0)return;
     placed[row].push({x:xx,half});
     c.fillText(label,xx,row===0?m.top-35:m.top-19);
     c.beginPath();c.setLineDash([]);c.strokeStyle='#64748b';c.lineWidth=.6;
@@ -362,6 +362,30 @@ function drawChart(){
   });
   c.strokeStyle='#26374d';c.lineWidth=1;c.setLineDash([]);
   c.strokeRect(m.left,m.top,pw,ph);
+
+  function line(points,color,dash,lw){
+    if(points.length<2)return;
+    c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
+    c.beginPath();points.forEach(([sx,sy],i)=>{
+      if(i===0)c.moveTo(x(sx),y(sy));else c.lineTo(x(sx),y(sy));
+    });
+    c.strokeStyle=color;c.lineWidth=lw;c.setLineDash(dash);c.stroke();c.restore();
+  }
+  const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
+  line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
+  line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
+  if(lastResult){
+    const sample=ticks.map(s=>[s,lastResult.passing[s]]).filter(([s,p])=>Number.isFinite(p));
+    line(sample,'#dc0000',[5,4],1.7);
+    c.fillStyle='#dc0000';
+    sample.forEach(([s,p])=>{c.beginPath();c.arc(x(s),y(p),2.5,0,Math.PI*2);c.fill();});
+  }
+  c.fillStyle='#243c5b';c.font='bold 12px Tahoma,Arial';
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
+  c.save();c.translate(18,m.top+ph/2);c.rotate(-Math.PI/2);
+  c.fillText('درصد عبوری',0,0);c.restore();
+  }
 
   function line(points,color,dash,lw){
     if(points.length<2)return;
@@ -461,20 +485,19 @@ function resetAll(){
 async function exportPDF(){
   if(!lastResult)return alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
   if(typeof window.html2pdf!=='function'){
-    return alert('کتابخانه محلی PDF در برنامه موجود نیست. فایل html2pdf.bundle.min.js باید کنار index.html قرار بگیرد و در APK بسته‌بندی شود.');
+    return alert('کتابخانه PDF موجود نیست. فایل html2pdf.bundle.min.js باید کنار index.html باشد.');
   }
 
   const report=document.createElement('div');
-  report.dir='rtl';
-  report.lang='fa';
-  report.style.cssText='position:fixed;left:-12000px;top:0;width:1100px;padding:28px;background:#fff;color:#172b43;font:14px Tahoma,Arial,sans-serif;direction:rtl;z-index:-1;';
+  report.dir='rtl';report.lang='fa';
+  report.style.cssText='position:fixed;left:0;top:0;width:1100px;padding:28px;background:#fff;color:#172b43;font:14px Tahoma,Arial,sans-serif;direction:rtl;z-index:-1;opacity:0;pointer-events:none;';
   const title=document.createElement('div');
   title.style.cssText='text-align:center;font-size:22px;font-weight:bold;line-height:1.8;margin-bottom:18px;border-bottom:2px solid #244e79;padding-bottom:12px;';
   title.innerHTML='<div>دانه بندی سنگدانه ریز و درشت</div><div style="font-size:15px;font-weight:normal">استاندارد ملی ایران شماره های 302-406-4977</div>';
   report.appendChild(title);
+  const safeText=v=>String(v||'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const meta=document.createElement('div');
   meta.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;font-size:13px;';
-  const safeText=v=>String(v||'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   meta.innerHTML=`<div>نام شرکت: ${safeText($('company').value)}</div><div>شماره نمونه: ${safeText($('sampleId').value)}</div><div>تاریخ: ${safeText($('date').value)}</div><div>نوع سنگدانه: ${safeText($('materialName').value)}</div><div>کلاس: ${safeText(lastResult.cls)}</div><div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>`;
   report.appendChild(meta);
 
@@ -484,41 +507,94 @@ async function exportPDF(){
   const tbody=document.createElement('tbody');
   for(const sieve of sieves){
     const row=document.createElement('tr');
-    const range=ranges[lastResult.cls]?.[sieve];
-    const values=[sieveLabels[sieve]||sieve,String(lastResult.weights[sieve]),lastResult.retained[sieve].toFixed(1),lastResult.cumulative[sieve].toFixed(1),lastResult.passing[sieve].toFixed(1),range?range.join(' - ')+'٪':'—',$('cmp-'+sieve).textContent];
-    row.innerHTML=values.map(v=>`<td style="border:1px solid #d5e0eb;padding:5px;text-align:center">${safeText(v)}</td>`).join('');
+    const rng=ranges[lastResult.cls]?.[sieve];
+    const vals=[sieveLabels[sieve]||sieve,String(lastResult.weights[sieve]),lastResult.retained[sieve].toFixed(1),lastResult.cumulative[sieve].toFixed(1),lastResult.passing[sieve].toFixed(1),rng?rng.join(' - ')+'٪':'—',$('cmp-'+sieve).textContent];
+    row.innerHTML=vals.map(v=>`<td style="border:1px solid #d5e0eb;padding:5px;text-align:center">${safeText(v)}</td>`).join('');
     tbody.appendChild(row);
   }
   table.appendChild(tbody);report.appendChild(table);
+
   const summary=document.createElement('div');
   summary.style.cssText='margin:10px 0;padding:10px;background:#f0f7ff;border:1px solid #d5e5f5;border-radius:8px;line-height:2';
   summary.textContent=`مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
   report.appendChild(summary);
-  const chartTitle=document.createElement('h3');chartTitle.textContent='نمودار نیمه‌لگاریتمی دانه‌بندی';chartTitle.style.cssText='text-align:center;margin:18px 0 8px';report.appendChild(chartTitle);
-  const chartImage=document.createElement('img');chartImage.src=$('gradingChart').toDataURL('image/png');chartImage.style.cssText='display:block;width:100%;height:auto;';report.appendChild(chartImage);
-  const conditions=$('usageResults').cloneNode(true);
-  conditions.style.cssText='display:grid;gap:7px;margin-top:14px;';
-  report.appendChild(conditions);
+
+  const chartTitle=document.createElement('h3');
+  chartTitle.textContent='نمودار نیمه‌لگاریتمی دانه‌بندی';
+  chartTitle.style.cssText='text-align:center;margin:18px 0 8px';
+  report.appendChild(chartTitle);
+  const chartImage=document.createElement('img');
+  chartImage.src=$('gradingChart').toDataURL('image/png');
+  chartImage.style.cssText='display:block;width:100%;height:auto;';
+  report.appendChild(chartImage);
+
+  const cond=$('usageResults').cloneNode(true);
+  cond.style.cssText='display:grid;gap:7px;margin-top:14px;';
+  report.appendChild(cond);
   document.body.appendChild(report);
+
   try{
-    await window.html2pdf().set({
+    const blob=await window.html2pdf().set({
       margin:[8,8,8,8],
-      filename:'گزارش-دانه-بندی.pdf',
       image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:2,useCORS:false,backgroundColor:'#ffffff',logging:false},
       jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
       pagebreak:{mode:['css','legacy']}
-    }).from(report).save();
-  }catch(error){
-    console.error('PDF export failed:',error);
-    alert('ساخت PDF ناموفق بود. دوباره تلاش کنید؛ اگر ادامه داشت، گزارش خطا را ارسال کنید.');
+    }).from(report).outputPdf('blob');
+
+    const filename='گزارش-دانه-بندی.pdf';
+    const filesystem=window.Capacitor?.Plugins?.Filesystem;
+
+    if(filesystem){
+      try{
+        const base64=await blobToBase64(blob);
+        const res=await filesystem.writeFile({
+          path:filename,
+          data:base64,
+          directory:'DOCUMENTS',
+          recursive:true
+        });
+        alert('فایل ذخیره شد:\n'+res.uri+'\n\nدر پوشه Documents دستگاه قابل دسترسی است.');
+        return;
+      }catch(e){
+        console.warn('Filesystem save failed, fallback to download:',e);
+      }
+    }
+
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;a.rel='noopener';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+
+    if(navigator.share && navigator.canShare){
+      try{
+        const file=new File([blob],filename,{type:'application/pdf'});
+        if(navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'گزارش دانه‌بندی'});
+        }
+      }catch(_){/* کاربر انصراف داد */}
+    }
+    alert('فایل PDF ساخته و برای دانلود آماده شد.');
+  }catch(err){
+    console.error('PDF export failed:',err);
+    alert('ساخت PDF ناموفق بود: '+(err?.message||err));
   }finally{
     report.remove();
   }
 }
 
-function ascii(s){return normalizeDigits(s).replace(/[^\x20-\x7e]/g,' ').slice(0,65)}
-
+function blobToBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const s=String(fr.result);
+      resolve(s.slice(s.indexOf(',')+1));
+    };
+    fr.onerror=reject;
+    fr.readAsDataURL(blob);
+  });
+}
 $('spClass').addEventListener('change',updateRanges);
 $('materialName').addEventListener('change',invalidate);
 ['totalWeight','afterWash','baseModulus'].forEach(id=>$(id).addEventListener('input',()=>{
