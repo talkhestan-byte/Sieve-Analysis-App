@@ -42,7 +42,14 @@ jobs:
       - name: Configure Capacitor
         run: |
           set -eu
-          npx cap init "Sieve Analysis" com.yourname.sieveanalysis --web-dir www
+          rm -f capacitor.config.ts capacitor.config.json
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.yourname.sieveanalysis",
+            "appName": "Sieve Analysis",
+            "webDir": "www"
+          }
+          EOF
           npx cap add android
           npx cap sync android
 
@@ -55,7 +62,8 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           cd ..
           mkdir -p output
-          cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+             output/Sieve-Analysis-debug.apk
 
       - name: Restore persistent signing key
         env:
@@ -66,7 +74,8 @@ jobs:
             echo "Missing SIGNING_KEYSTORE_BASE64 secret"
             exit 1
           }
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > android/app/release-key.jks
           test -s android/app/release-key.jks
 
       - name: Configure release signing
@@ -80,11 +89,15 @@ jobs:
               raise SystemExit("android/app/build.gradle not found")
 
           content = path.read_text()
+
           if "signingConfigs {" in content:
-              raise SystemExit("Signing configuration already exists; inspect build.gradle")
+              raise SystemExit(
+                  "Signing configuration already exists; refusing to duplicate it."
+              )
 
           marker = "buildTypes {"
           pos = content.find(marker)
+
           if pos < 0:
               raise SystemExit("buildTypes block not found")
 
@@ -98,22 +111,28 @@ jobs:
                   }
               }
           '''
+
           content = content[:pos] + signing_block + content[pos:]
           pos = content.find(marker)
           release_pos = content.find("release {", pos)
+
           if release_pos < 0:
               raise SystemExit("release build type not found")
+
           brace = content.find("{", release_pos)
           line_end = content.find("\n", brace)
+
           if line_end < 0:
               raise SystemExit("Could not locate release block")
+
           content = (
               content[:line_end + 1]
               + "            signingConfig signingConfigs.release\n"
               + content[line_end + 1:]
           )
+
           path.write_text(content)
-          print("Release signing configured")
+          print("Release signing configured.")
           PY
 
       - name: Build signed release AAB
@@ -126,11 +145,14 @@ jobs:
           test -n "$SIGNING_STORE_PASSWORD"
           test -n "$SIGNING_KEY_ALIAS"
           test -n "$SIGNING_KEY_PASSWORD"
+
           cd android
           ./gradlew bundleRelease
           test -s app/build/outputs/bundle/release/app-release.aab
           cd ..
-          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
+
+          cp android/app/build/outputs/bundle/release/app-release.aab \
+             output/Sieve-Analysis.aab
 
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
@@ -158,6 +180,10 @@ jobs:
             --ks-key-alias "$KEY_ALIAS" \
             --ks-pass "env:KS_PASS" \
             --key-pass "env:KEY_PASS"
+
+          echo "Generated files:"
+          find output -maxdepth 1 -type f -printf '%f\n'
+
           test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
           test -s output/Sieve-Analysis.aab
           test -s output/Sieve-Analysis-debug.apk
