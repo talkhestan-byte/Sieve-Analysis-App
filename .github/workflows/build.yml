@@ -1,154 +1,187 @@
-
-name: Build Sieve Analysis App
+name: Build Sieve Analysis for Cafe Bazaar
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'index.html'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'capacitor.config.*'
-      - '.github/workflows/build.yml'
+workflow_dispatch:
 
 permissions:
-  contents: read
+contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+name: Build APK, AAB and Cafe Bazaar BIN
+runs-on: ubuntu-22.04
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+  - name: Setup Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: '20'
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
+  - name: Setup Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      - name: Install dependencies
-        run: |
-          npm init -y
-          npm install @capacitor/core@6 @capacitor/android@6
-          npm install --save-dev @capacitor/cli@6 typescript
-          npm install @bcyesil/capacitor-plugin-printer@0.0.5
-          npm install html2pdf.js
+  - name: Prepare web app
+    run: |
+      set -eu
+      mkdir -p www
+      cp index.html www/
+      npm init -y
+      npm install @capacitor/core@6 @capacitor/android@6
+      npm install --save-dev @capacitor/cli@6 typescript
+      npm install @bcyesil/capacitor-plugin-printer@0.0.5
+      npm install html2pdf.js
+      cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
 
-      - name: Prepare web app
-        run: |
-          mkdir -p www
-          cp index.html www/index.html
-          cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
+  - name: Configure Capacitor
+    run: |
+      set -eu
+      npx cap init "Sieve Analysis" com.yourname.sieveanalysis --web-dir www
+      npx cap add android
+      npx cap sync android
 
-      - name: Create Capacitor config
-        run: |
-          cat > capacitor.config.json <<'EOF'
-          {
-            "appId": "com.yourname.sieveanalysis",
-            "appName": "Sieve Analysis",
-            "webDir": "www",
-            "bundledWebRuntime": false
-          }
-          EOF
+  - name: Build Debug APK
+    run: |
+      set -eu
+      cd android
+      chmod +x gradlew
+      ./gradlew assembleDebug
+      test -s app/build/outputs/apk/debug/app-debug.apk
+      cd ..
+      mkdir -p output
+      cp android/app/build/outputs/apk/debug/app-debug.apk \
+         output/Sieve-Analysis-debug.apk
 
-      - name: Add Android platform
-        run: npx cap add android
+  - name: Restore persistent signing key
+    env:
+      KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+    run: |
+      set -eu
+      test -n "$KEYSTORE_BASE64" || {
+        echo "Missing SIGNING_KEYSTORE_BASE64 secret"
+        exit 1
+      }
+      printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+        > android/app/release-key.jks
+      test -s android/app/release-key.jks
 
-      - name: Sync Android
-        run: npx cap sync android
+  - name: Configure release signing
+    run: |
+      set -eu
+      python3 - <<'PY'
+      from pathlib import Path
 
-      - name: Build debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+      path = Path("android/app/build.gradle")
+      if not path.is_file():
+          raise SystemExit("android/app/build.gradle not found")
 
-      - name: Prepare signing keystore
-        if: ${{ env.SIGNING_KEYSTORE_BASE64 != '' }}
-        env:
-          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
-        run: |
-          echo "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/sieve-release.jks"
-          test -s "$RUNNER_TEMP/sieve-release.jks"
+      content = path.read_text()
+      if "signingConfigs {" in content:
+          raise SystemExit(
+              "Signing configuration already exists; refusing to duplicate it."
+          )
 
-      - name: Configure release signing
-        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
-        env:
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: |
-          cat >> android/app/build.gradle <<'EOF'
+      marker = "buildTypes {"
+      pos = content.find(marker)
+      if pos < 0:
+          raise SystemExit("buildTypes block not found")
 
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file(System.getenv("RUNNER_TEMP") + "/sieve-release.jks")
-                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
-                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
-                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
-                  }
+      signing_block = '''
+          signingConfigs {
+              release {
+                  storeFile file("release-key.jks")
+                  storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                  keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                  keyPassword System.getenv("SIGNING_KEY_PASSWORD")
               }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
           }
-          EOF
+      '''
 
-      - name: Build signed release AAB
-        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
-        run: |
-          cd android
-          ./gradlew bundleRelease
+      content = content[:pos] + signing_block + content[pos:]
+      pos = content.find(marker)
+      release_pos = content.find("release {", pos)
 
-      - name: Download Cafe Bazaar bundle signer
-        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
-        run: |
-          mkdir -p tools output
-          curl -fL \
-            https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundle-signer \
-            -o tools/bundle-signer
-          chmod +x tools/bundle-signer
+      if release_pos < 0:
+          raise SystemExit("release build type not found")
 
-      - name: Generate Cafe Bazaar BIN
-        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
-        env:
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: |
-          cp android/app/build/outputs/bundle/release/app-release.aab output/app-release.aab
-          tools/bundle-signer generate \
-            -v 1 \
-            -k "$RUNNER_TEMP/sieve-release.jks" \
-            -p "$SIGNING_STORE_PASSWORD" \
-            -a "$SIGNING_KEY_ALIAS" \
-            -ap "$SIGNING_KEY_PASSWORD" \
-            -b output/app-release.aab \
-            -o output/app-release.bin
+      brace = content.find("{", release_pos)
+      line_end = content.find("\\n", brace)
 
-      - name: Collect APK
-        run: |
-          mkdir -p output
-          cp android/app/build/outputs/apk/debug/app-debug.apk output/app-debug.apk
+      if line_end < 0:
+          raise SystemExit("Could not locate release block")
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sieve-analysis-build
-          path: output/
-          if-no-files-found: error
-          retention-days: 14
+      content = (
+          content[:line_end + 1]
+          + "            signingConfig signingConfigs.release\\n"
+          + content[line_end + 1:]
+      )
+
+      path.write_text(content)
+      print("Release signing configured.")
+      PY
+
+  - name: Build signed release AAB
+    env:
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+    run: |
+      set -eu
+      test -n "$SIGNING_STORE_PASSWORD"
+      test -n "$SIGNING_KEY_ALIAS"
+      test -n "$SIGNING_KEY_PASSWORD"
+
+      cd android
+      ./gradlew bundleRelease
+      test -s app/build/outputs/bundle/release/app-release.aab
+      cd ..
+
+      cp android/app/build/outputs/bundle/release/app-release.aab \
+         output/Sieve-Analysis.aab
+
+  - name: Download official Cafe Bazaar Bundle Signer
+    run: |
+      set -eu
+      curl --fail --location --silent --show-error \
+        https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
+        --output bundlesigner.jar
+      test -s bundlesigner.jar
+
+  - name: Generate Cafe Bazaar BIN
+    env:
+      KS_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+    run: |
+      set -eu
+      java -jar bundlesigner.jar genbin \
+        --verbose \
+        --bundle android/app/build/outputs/bundle/release/app-release.aab \
+        --bin output \
+        --v2-signing-enabled true \
+        --v3-signing-enabled false \
+        --ks android/app/release-key.jks \
+        --ks-type PKCS12 \
+        --ks-key-alias "$KEY_ALIAS" \
+        --ks-pass "env:KS_PASS" \
+        --key-pass "env:KEY_PASS"
+
+      echo "Generated files:"
+      find output -maxdepth 1 -type f -printf '%f\n'
+
+      test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
+      test -s output/Sieve-Analysis.aab
+      test -s output/Sieve-Analysis-debug.apk
+
+  - name: Upload all release artifacts
+    uses: actions/upload-artifact@v4
+    with:
+      name: Sieve-Analysis-CafeBazaar
+      path: output/*
+      if-no-files-found: error
+      retention-days: 14
