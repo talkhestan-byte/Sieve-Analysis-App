@@ -1,390 +1,50 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>دانه‌بندی سنگدانه (استاندارد 4977)</title>
+<html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تحلیل دانه‌بندی سنگدانه - ۴۹۷۷</title>
 <style>
-  :root { --primary: #0067c0; --bg: #f4f7fb; --card: #ffffff; --text: #1e293b; --border: #cbd5e1; --success: #10b981; --danger: #ef4444; }
-  * { box-sizing: border-box; }
-  body { font-family: Tahoma, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); direction: rtl; font-size: 13px; }
-  .card { background: var(--card); border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-  h2 { text-align: center; color: var(--primary); margin-top: 0; font-size: 18px; margin-bottom: 20px; }
-  .row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .field { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
-  .field span { font-size: 11px; margin-bottom: 5px; color: #64748b; font-weight: bold; }
-  input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; text-align: center; width: 100%; }
-  input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
-  
-  .table-container { width: 100%; overflow-x: auto; margin-top: 10px; }
-  table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
-  th, td { border: 1px solid #e2e8f0; padding: 8px 5px; text-align: center; }
-  th { background: #f1f5f9; font-weight: bold; color: #334155; }
-  td input { padding: 5px; font-size: 11px; border-radius: 4px; }
-  .results-box { display: flex; justify-content: space-between; background: #e0f2fe; padding: 12px; border-radius: 8px; margin-top: 15px; font-weight: bold; font-size: 14px; color: #0369a1; }
-  .warning-box { color: var(--danger); font-size: 12px; margin-top: 10px; font-weight: bold; min-height: 20px; }
-  
-  .buttons { display: flex; gap: 10px; margin-top: 15px; }
-  button { flex: 1; padding: 14px; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: bold; color: white; cursor: pointer; transition: transform 0.1s; }
-  button:active { transform: scale(0.98); }
-  .btn-calc { background: var(--success); }
-  .btn-pdf { background: var(--primary); }
-  .btn-reset { background: #64748b; }
-  
-  .ok { color: var(--success); font-weight: bold; }
-  .not-ok { color: var(--danger); font-weight: bold; }
-</style>
-</head>
-<body>
-
-<div class="card">
-  <h2>تحلیل دانه‌بندی سنگدانه (استاندارد 4977)</h2>
-  
-  <div class="row">
-    <div class="field"><span>نام شرکت</span><input type="text" id="company" placeholder="اختیاری"></div>
-    <div class="field"><span>شماره نمونه</span><input type="text" id="sampleId" placeholder="اختیاری"></div>
-    <div class="field"><span>تاریخ</span><input type="text" id="date" placeholder="مثلاً 1402/05/01"></div>
-  </div>
-  
-  <div class="row">
-    <div class="field">
-      <span>نام سنگدانه</span>
-      <select id="materialName">
-        <option value="ماسه طبیعی">ماسه طبیعی</option>
-        <option value="شن طبیعی">شن طبیعی</option>
-        <option value="ماسه شکسته">ماسه شکسته</option>
-        <option value="شن شکسته">شن شکسته</option>
-        <option value="مخلوط شن و ماسه">مخلوط شن و ماسه</option>
-      </select>
-    </div>
-    <div class="field">
-      <span>نوع سنگدانه</span>
-      <select id="materialCategory" onchange="toggleCategoryFields()">
-        <option value="ریزدانه">ریزدانه (ماسه)</option>
-        <option value="درشت‌دانه">درشت‌دانه (شن)</option>
-      </select>
-    </div>
-    <div class="field">
-      <span>کلاس دانه‌بندی</span>
-      <select id="spClass">
-        <option value="نمي دانم">نمی‌دانم</option>
-        <option value="ماسه رده1">ماسه رده ۱</option>
-        <option value="ماسه رده2">ماسه رده ۲</option>
-        <option value="ماسه رده3">ماسه رده ۳</option>
-        <option value="شن رده 9">شن رده ۹</option>
-        <option value="شن رده 89">شن رده ۸۹</option>
-        <option value="شن رده 8">شن رده ۸</option>
-        <option value="شن رده 7">شن رده ۷</option>
-        <option value="شن رده 67">شن رده ۶۷</option>
-        <option value="شن رده 6">شن رده ۶</option>
-        <option value="شن رده 57">شن رده ۵۷</option>
-        <option value="شن رده 56">شن رده ۵۶</option>
-        <option value="شن رده 5">شن رده ۵</option>
-        <option value="شن رده 467">شن رده ۴۶۷</option>
-        <option value="شن رده 4">شن رده ۴</option>
-        <option value="شن رده 357">شن رده ۳۵۷</option>
-        <option value="شن رده 3">شن رده ۳</option>
-        <option value="شن رده 2">شن رده ۲</option>
-        <option value="شن رده 1">شن رده ۱</option>
-      </select>
-    </div>
-  </div>
-  
-  <div class="row">
-    <div class="field"><span>وزن کل نمونه (گرم)</span><input type="number" id="totalWeight" step="0.1"></div>
-    <div class="field"><span>وزن بعد از شستشو (گرم)</span><input type="number" id="afterWash" step="0.1"></div>
-    <div class="field" id="baseModulusField"><span>مدول نرمی مبنا</span><input type="number" id="baseModulus" step="0.01" value="2.90"></div>
-  </div>
-</div>
-
-<div class="card">
-  <h2 style="font-size: 15px; margin-bottom: 10px;">جدول الک‌ها</h2>
-  <div class="table-container">
-    <table id="sieveTable">
-      <thead>
-        <tr>
-          <th>الک (mm)</th>
-          <th>وزن مانده (gr)</th>
-          <th>مانده (%)</th>
-          <th>تجمعی (%)</th>
-          <th>عبوری (%)</th>
-          <th>محدوده مجاز</th>
-          <th>انطباق</th>
-        </tr>
-      </thead>
-      <tbody id="sieveBody"></tbody>
-    </table>
-  </div>
-  
-  <div class="results-box">
-    <span>مدول نرمی: <span id="tvFm">-</span></span>
-    <span>عبوری از الک 200: <span id="tvPassing200">-</span></span>
-  </div>
-  
-  <div class="warning-box" id="warnBox"></div>
-  
-  <div class="buttons">
-    <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
-    <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
-  </div>
-</div>
-
+:root{--primary:#0067c0;--bg:#f4f7fb;--border:#cbd5e1;--success:#059669;--danger:#dc2626}*{box-sizing:border-box}body{font:13px Tahoma,Arial,sans-serif;background:var(--bg);margin:0;padding:12px;color:#1e293b}.card{background:white;border-radius:10px;padding:14px;margin:0 auto 14px;max-width:1000px;box-shadow:0 2px 8px #0001}h2{text-align:center;color:var(--primary);font-size:17px;margin:2px 0 16px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px;margin-bottom:12px}.field{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}.field label{font-size:12px;font-weight:bold;flex:1}.field input,.field select{font:12px Tahoma,Arial,sans-serif;border:1px solid var(--border);border-radius:6px;padding:9px 5px;min-width:0;width:145px;max-width:55%;background:white;text-align:center}.field input.numeric{width:8ch;max-width:8ch;direction:ltr;font-family:Arial,sans-serif;font-size:14px}.field input:focus,.field select:focus{outline:2px solid var(--primary)}.table-container{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:600px;font-size:11px}th,td{border:1px solid #e2e8f0;padding:7px 3px;text-align:center}th{background:#f1f5f9}td input.numeric{width:8ch;max-width:100%;padding:6px 2px;text-align:center;direction:ltr;border:1px solid var(--border);border-radius:4px;font:12px Arial,sans-serif}.results-box{display:flex;gap:10px;justify-content:space-around;flex-wrap:wrap;background:#e0f2fe;padding:12px;border-radius:8px;margin-top:12px;font-weight:bold;color:#0369a1}.warning-box{color:var(--danger);font-size:12px;margin-top:10px;line-height:1.9}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer}.btn-calc{background:var(--success)}.btn-pdf{background:var(--primary)}.btn-reset{background:#64748b}.ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}.chart-wrap{width:100%;overflow:hidden}canvas{display:block;width:100%;height:340px}.legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px;margin-top:6px}.legend span:before{content:'';display:inline-block;width:28px;vertical-align:middle;margin-left:5px;border-top:2px solid #111}.legend .sample:before{border-top:2px dashed #dc0000}.note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}@media(max-width:420px){body{padding:7px}.card{padding:10px}.row{grid-template-columns:1fr}.field input,.field select{width:150px}canvas{height:300px}}
+</style></head><body>
+<div class="card"><h2>تحلیل دانه‌بندی سنگدانه (استاندارد ۴۹۷۷)</h2>
+<div class="row"><div class="field"><label for="company">نام شرکت</label><input id="company" placeholder="اختیاری"></div><div class="field"><label for="sampleId">شماره نمونه</label><input id="sampleId" placeholder="اختیاری"></div><div class="field"><label for="date">تاریخ</label><input id="date" placeholder="۱۴۰۵/۰۸/۰۹"></div></div>
+<div class="row"><div class="field"><label for="materialName">نام سنگدانه</label><select id="materialName"><option>ماسه طبیعی</option><option>شن طبیعی</option><option>ماسه شکسته</option><option>شن شکسته</option><option>مخلوط شن و ماسه</option></select></div><div class="field"><label for="materialCategory">نوع سنگدانه</label><select id="materialCategory" onchange="toggleCategoryFields()"><option>ریزدانه</option><option>درشت‌دانه</option></select></div><div class="field"><label for="spClass">کلاس دانه‌بندی</label><select id="spClass"></select></div></div>
+<div class="row"><div class="field"><label for="totalWeight">وزن کل نمونه (گرم)</label><input id="totalWeight" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div><div class="field"><label for="afterWash">وزن بعد از شستشو (گرم)</label><input id="afterWash" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div><div class="field" id="baseModulusField"><label for="baseModulus">مدول نرمی مبنا</label><input id="baseModulus" class="numeric" type="text" inputmode="decimal" maxlength="6" value="2.90"></div></div></div>
+<div class="card"><h2>جدول الک‌ها</h2><div class="table-container"><table><thead><tr><th>الک (mm)</th><th>وزن مانده (gr)</th><th>مانده (%)</th><th>تجمعی (%)</th><th>عبوری (%)</th><th>محدوده مجاز</th><th>انطباق</th></tr></thead><tbody id="sieveBody"></tbody></table></div><div class="results-box"><span>مدول نرمی: <b id="tvFm">-</b></span><span>عبوری از الک ۲۰۰: <b id="tvPassing200">-</b></span></div><div class="warning-box" id="warnBox"></div><div class="buttons"><button class="btn-calc" onclick="calculate()">محاسبه</button><button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button><button class="btn-reset" onclick="resetAll()">بازنشانی</button></div></div>
+<div class="card"><h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2><div class="chart-wrap"><canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas></div><div class="legend"><span>حدود استاندارد</span><span class="sample">درصد عبوری نمونه</span></div><p class="note">محور افقی: اندازه الک (میلی‌متر، لگاریتمی) | محور عمودی: درصد عبوری (خطی)</p></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-  // ==================== داده‌ها و استانداردها ====================
-  const sieves = ["75", "63", "50", "37.5", "25", "19", "12.5", "9.5", "4.75", "2.36", "1.18", "0.6", "0.3", "0.15", "0.075"];
-  
-  const ranges = {
-    "ماسه رده1": {"0.075":[0,3], "0.15":[0,10], "0.3":[5,30], "0.6":[25,60], "1.18":[50,85], "2.36":[80,100], "4.75":[95,100], "9.5":[100,100]},
-    "ماسه رده2": {"0.075":[0,3], "0.15":[2,10], "0.3":[5,30], "0.6":[20,50], "1.18":[35,80], "2.36":[60,100], "4.75":[85,100], "9.5":[100,100]},
-    "ماسه رده3": {"0.075":[2,5], "0.15":[10,20], "0.3":[15,40], "0.6":[30,60], "1.18":[45,80], "2.36":[65,100], "4.75":[90,100], "9.5":[100,100]},
-    "شن رده 9": {"0.6":[0,5], "1.18":[0,10], "2.36":[10,40], "4.75":[85,100], "9.5":[100,100]},
-    "شن رده 89": {"0.6":[0,5], "1.18":[0,10], "2.36":[5,30], "4.75":[20,55], "9.5":[90,100], "12.5":[100,100]},
-    "شن رده 8": {"1.18":[0,5], "2.36":[0,10], "4.75":[10,30], "9.5":[85,100], "12.5":[100,100]},
-    "شن رده 7": {"2.36":[0,5], "4.75":[0,15], "9.5":[40,70], "12.5":[90,100], "19":[100,100]},
-    "شن رده 67": {"2.36":[0,5], "4.75":[0,10], "9.5":[20,55], "19":[90,100], "25":[100,100]},
-    "شن رده 6": {"4.75":[0,5], "9.5":[0,15], "12.5":[20,55], "19":[90,100], "25":[100,100]},
-    "شن رده 57": {"2.36":[0,5], "4.75":[0,10], "12.5":[25,60], "25":[95,100], "37.5":[100,100]},
-    "شن رده 56": {"4.75":[0,5], "9.5":[0,15], "12.5":[10,40], "19":[40,85], "25":[90,100], "37.5":[100,100]},
-    "شن رده 5": {"9.5":[0,5], "12.5":[0,10], "19":[20,55], "25":[90,100], "37.5":[100,100]},
-    "شن رده 467": {"4.75":[0,5], "9.5":[10,30], "19":[35,70], "37.5":[95,100], "50":[100,100]},
-    "شن رده 4": {"9.5":[0,5], "19":[0,15], "25":[20,55], "37.5":[90,100], "50":[100,100]},
-    "شن رده 357": {"4.75":[0,5], "12.5":[10,30], "25":[35,70], "50":[95,100], "63":[100,100]},
-    "شن رده 3": {"12.5":[0,5], "25":[0,15], "37.5":[35,70], "50":[90,100], "63":[100,100]},
-    "شن رده 2": {"19":[0,5], "37.5":[0,15], "50":[35,70], "63":[90,100], "75":[100,100]},
-    "شن رده 1": {"19":[0,5], "37.5":[0,15], "63":[25,60], "90":[90,100], "100":[100,100]}
-  };
-
-  let lastResult = null;
-
-  // ==================== مقداردهی اولیه ====================
-  function buildTable() {
-    const tbody = document.getElementById('sieveBody');
-    tbody.innerHTML = '';
-    sieves.forEach(s => {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:bold;">${s}</td>
-        <td><input type="number" step="0.1" id="w-${s}" oninput="updateRanges()" placeholder="0"></td>
-        <td id="ret-${s}">-</td>
-        <td id="cum-${s}">-</td>
-        <td id="pas-${s}">-</td>
-        <td id="rng-${s}">-</td>
-        <td id="cmp-${s}">-</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function toggleCategoryFields() {
-    const cat = document.getElementById('materialCategory').value;
-    document.getElementById('baseModulusField').style.display = (cat === 'ریزدانه') ? 'flex' : 'none';
-    updateRanges();
-  }
-
-  function updateRanges() {
-    const cls = document.getElementById('spClass').value;
-    sieves.forEach(s => {
-      const rngCell = document.getElementById(`rng-${s}`);
-      if (ranges[cls] && ranges[cls][s]) {
-        rngCell.innerText = ranges[cls][s][0] + " - " + ranges[cls][s][1] + "%";
-        rngCell.style.color = "#64748b";
-      } else {
-        rngCell.innerText = "-";
-      }
-    });
-  }
-
-  document.getElementById('spClass').addEventListener('change', updateRanges);
-
-  // ==================== منطق محاسبات ====================
-  function calculate() {
-    const total = parseFloat(document.getElementById('totalWeight').value) || 0;
-    const afterWash = parseFloat(document.getElementById('afterWash').value) || 0;
-    const baseModulus = parseFloat(document.getElementById('baseModulus').value) || 0;
-    const category = document.getElementById('materialCategory').value;
-    const matName = document.getElementById('materialName').value;
-    const cls = document.getElementById('spClass').value;
-
-    if (total <= 0) { alert("لطفاً وزن کل نمونه را وارد کنید."); return; }
-    if (afterWash <= 0) { alert("لطفاً وزن بعد از شستشو را وارد کنید."); return; }
-
-    let weights = {};
-    let firstNonZero = -1, lastNonZero = -1;
-    let totalCalc = total - afterWash;
-    
-    sieves.forEach((s, idx) => {
-      let w = parseFloat(document.getElementById(`w-${s}`).value) || 0;
-      weights[s] = w;
-      totalCalc += w;
-      if (w > 0) {
-        if (firstNonZero === -1) firstNonZero = idx;
-        lastNonZero = idx;
-      }
-    });
-
-    if (firstNonZero === -1) { alert("حداقل باید وزن یک الک بزرگتر از صفر باشد."); return; }
-
-    // بررسی خطای وزن
-    let weightDiff = Math.abs(total - totalCalc);
-    let tolerance = total * 0.003;
-    let weightOk = weightDiff <= tolerance;
-
-    let res = { 
-        retained:{}, cumulative:{}, passing:{}, hasValue:{}, 
-        passing200: ((total - afterWash) / total) * 100, 
-        fm: -1, 
-        warn: "" 
-    };
-
-    let cum = 0;
-    sieves.forEach((s, idx) => {
-      if (idx >= firstNonZero && idx <= lastNonZero && weights[s] > 0) {
-        let p = (weights[s] / total) * 100;
-        cum += p;
-        res.retained[s] = p;
-        res.cumulative[s] = cum;
-        res.passing[s] = 100 - cum;
-        res.hasValue[s] = true;
-      }
-    });
-
-    // جایگذاری 200 برای ریزدانه
-    if (category === "ریزدانه" && !res.hasValue["0.075"]) {
-      res.passing["0.075"] = res.passing200;
-      res.hasValue["0.075"] = true;
-    }
-
-    // تنظیم 100% برای الک بالایی
-    let maxIdx = -1, maxVal = -1;
-    sieves.forEach((s, idx) => {
-      if (res.hasValue[s] && res.passing[s] > maxVal) { maxVal = res.passing[s]; maxIdx = idx; }
-    });
-    if (maxIdx > 0) {
-      let prevS = sieves[maxIdx - 1];
-      res.passing[prevS] = 100;
-      res.hasValue[prevS] = true;
-    }
-
-    // محاسبه FM
-    let fmSum = 0, validCount = 0;
-    ["4.75", "2.36", "1.18", "0.6", "0.3", "0.15"].forEach(s => {
-      if (res.hasValue[s]) { fmSum += res.cumulative[s]; validCount++; }
-    });
-    if (validCount > 0) res.fm = fmSum / 100;
-
-    if (!weightOk) res.warn += `اخطار: اختلاف وزن (${weightDiff.toFixed(2)} گرم) بیش از حد مجاز (${tolerance.toFixed(2)} گرم) است.<br>`;
-    if (res.fm > 0 && baseModulus > 0 && category === "ریزدانه") {
-      if (Math.abs(res.fm - baseModulus) > 0.2) res.warn += "اخطار: مدول نرمی با مدول نرمی مبنا (با اختلاف بیش از 0.2) انطباق ندارد.<br>";
-    }
-
-    // آپدیت جدول
-    sieves.forEach(s => {
-      if (res.hasValue[s]) {
-        document.getElementById(`ret-${s}`).innerText = res.retained[s]?.toFixed(1)+"%" || "-";
-        document.getElementById(`cum-${s}`).innerText = res.cumulative[s]?.toFixed(1)+"%" || "-";
-        document.getElementById(`pas-${s}`).innerText = res.passing[s]?.toFixed(1)+"%" || "-";
-        
-        let comp = "-";
-        if (cls !== "نمي دانم" && ranges[cls] && ranges[cls][s]) {
-          let min = ranges[cls][s][0], max = ranges[cls][s][1];
-          let val = res.passing[s];
-          if (s === "0.075" && category === "ریزدانه") {
-            if (cls === "ماسه رده3") comp = (val <= 16.0) ? "منطبق" : "نامنطبق";
-            else { let limit = matName.includes("طبیعی") ? 5.0 : 7.0; comp = (val <= limit) ? "منطبق" : "نامنطبق"; }
-          } else {
-            comp = (val >= min && val <= max) ? "منطبق" : "نامنطبق";
-          }
-        }
-        let cmpCell = document.getElementById(`cmp-${s}`);
-        cmpCell.innerText = comp;
-        cmpCell.className = comp === "منطبق" ? "ok" : (comp === "نامنطبق" ? "not-ok" : "");
-      } else {
-        document.getElementById(`ret-${s}`).innerText = "-";
-        document.getElementById(`cum-${s}`).innerText = "-";
-        document.getElementById(`pas-${s}`).innerText = "-";
-        document.getElementById(`cmp-${s}`).innerText = "-";
-        document.getElementById(`cmp-${s}`).className = "";
-      }
-    });
-
-    document.getElementById('tvFm').innerText = res.fm > 0 ? res.fm.toFixed(2) : "-";
-    document.getElementById('tvPassing200').innerText = res.passing200.toFixed(2) + "%";
-    document.getElementById('warnBox').innerHTML = res.warn;
-    
-    lastResult = { res, weights, total, afterWash };
-  }
-
-  function resetAll() {
-    sieves.forEach(s => document.getElementById(`w-${s}`).value = "");
-    document.getElementById('totalWeight').value = "";
-    document.getElementById('afterWash').value = "";
-    document.getElementById('baseModulus').value = "2.90";
-    calculate(); 
-    document.getElementById('tvFm').innerText = "-";
-    document.getElementById('tvPassing200').innerText = "-";
-    document.getElementById('warnBox').innerHTML = "";
-    lastResult = null;
-  }
-
-  // ==================== خروجی PDF ====================
-  function exportPDF() {
-    if (!lastResult) { alert("ابتدا دکمه محاسبه را بزنید."); return; }
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("Sieve Analysis Report (Standard 4977)", 105, 20, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Company: " + (document.getElementById('company').value || "-"), 14, 35);
-    doc.text("Sample ID: " + (document.getElementById('sampleId').value || "-"), 14, 42);
-    doc.text("Date: " + (document.getElementById('date').value || "-"), 14, 49);
-    doc.text("Material: " + document.getElementById('materialName').value + " (" + document.getElementById('materialCategory').value + ")", 14, 56);
-    doc.text("Class: " + document.getElementById('spClass').value, 14, 63);
-
-    let y = 80;
-    doc.setFont("helvetica", "bold");
-    doc.text("Sieve", 14, y); doc.text("Weight", 45, y); doc.text("Retained", 75, y);
-    doc.text("Cumulative", 105, y); doc.text("Passing", 135, y); doc.text("Status", 165, y);
-    doc.line(14, y+2, 196, y+2);
-    y += 8;
-    
-    doc.setFont("helvetica", "normal");
-    sieves.forEach(s => {
-      if (lastResult.res.hasValue[s]) {
-        doc.text(s, 14, y);
-        doc.text(lastResult.weights[s].toString(), 45, y);
-        doc.text(lastResult.res.retained[s].toFixed(1) + "%", 75, y);
-        doc.text(lastResult.res.cumulative[s].toFixed(1) + "%", 105, y);
-        doc.text(lastResult.res.passing[s].toFixed(1) + "%", 135, y);
-        let status = document.getElementById(`cmp-${s}`).innerText;
-        doc.text(status, 165, y);
-        y += 7;
-      }
-    });
-
-    y += 10;
-    doc.setFont("helvetica", "bold");
-    doc.text("Fineness Modulus (F.M): " + (lastResult.res.fm > 0 ? lastResult.res.fm.toFixed(2) : "-"), 14, y);
-    y += 7;
-    doc.text("Passing #200: " + lastResult.res.passing200.toFixed(2) + "%", 14, y);
-    if(lastResult.res.warn) {
-        y += 7;
-        doc.setTextColor(255, 0, 0);
-        doc.text("Warnings: " + lastResult.res.warn.replace(/<br>/g, ' | ').replace(/اخطار:/g, ''), 14, y);
-        doc.setTextColor(0, 0, 0);
-    }
-
-    doc.save("Sieve_Report.pdf");
-  }
-
-  buildTable();
-  toggleCategoryFields();
-</script>
-</body>
-  </html>
+'use strict';
+const sieves=['100','90','75','63','50','37.5','25','19','12.5','9.5','4.75','2.36','1.18','0.6','0.3','0.15','0.075'];
+const ranges={
+'ماسه رده1':{'0.075':[0,3],'0.15':[0,10],'0.3':[5,30],'0.6':[25,60],'1.18':[50,85],'2.36':[80,100],'4.75':[95,100],'9.5':[100,100]},
+'ماسه رده2':{'0.075':[0,3],'0.15':[2,10],'0.3':[5,30],'0.6':[20,50],'1.18':[35,80],'2.36':[60,100],'4.75':[85,100],'9.5':[100,100]},
+'ماسه رده3':{'0.075':[2,5],'0.15':[10,20],'0.3':[15,40],'0.6':[30,60],'1.18':[45,80],'2.36':[65,100],'4.75':[90,100],'9.5':[100,100]},
+'شن رده 9':{'0.6':[0,5],'1.18':[0,10],'2.36':[10,40],'4.75':[85,100],'9.5':[100,100]},
+'شن رده 89':{'0.6':[0,5],'1.18':[0,10],'2.36':[5,30],'4.75':[20,55],'9.5':[90,100],'12.5':[100,100]},
+'شن رده 8':{'1.18':[0,5],'2.36':[0,10],'4.75':[10,30],'9.5':[85,100],'12.5':[100,100]},
+'شن رده 7':{'2.36':[0,5],'4.75':[0,15],'9.5':[40,70],'12.5':[90,100],'19':[100,100]},
+'شن رده 67':{'2.36':[0,5],'4.75':[0,10],'9.5':[20,55],'19':[90,100],'25':[100,100]},
+'شن رده 6':{'4.75':[0,5],'9.5':[0,15],'12.5':[20,55],'19':[90,100],'25':[100,100]},
+'شن رده 57':{'2.36':[0,5],'4.75':[0,10],'12.5':[25,60],'25':[95,100],'37.5':[100,100]},
+'شن رده 56':{'4.75':[0,5],'9.5':[0,15],'12.5':[10,40],'19':[40,85],'25':[90,100],'37.5':[100,100]},
+'شن رده 5':{'9.5':[0,5],'12.5':[0,10],'19':[20,55],'25':[90,100],'37.5':[100,100]},
+'شن رده 467':{'4.75':[0,5],'9.5':[10,30],'19':[35,70],'37.5':[95,100],'50':[100,100]},
+'شن رده 4':{'9.5':[0,5],'19':[0,15],'25':[20,55],'37.5':[90,100],'50':[100,100]},
+'شن رده 357':{'4.75':[0,5],'12.5':[10,30],'25':[35,70],'50':[95,100],'63':[100,100]},
+'شن رده 3':{'12.5':[0,5],'25':[0,15],'37.5':[35,70],'50':[90,100],'63':[100,100]},
+'شن رده 2':{'19':[0,5],'37.5':[0,15],'50':[35,70],'63':[90,100],'75':[100,100]},
+'شن رده 1':{'19':[0,5],'37.5':[0,15],'63':[25,60],'90':[90,100],'100':[100,100]}
+};
+const $=id=>document.getElementById(id);let lastResult=null;
+function normalizeDigits(v){return String(v).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776)).replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/٫/g,'.').replace(/٬/g,'');}
+function cleanNumeric(v){v=normalizeDigits(v).replace(/[^0-9.]/g,'');let dot=v.indexOf('.');if(dot>=0)v=v.slice(0,dot+1)+v.slice(dot+1).replace(/\./g,'');return v.slice(0,6);}
+function number(id){const v=$(id).value;return v.trim()===''?NaN:Number(v)}
+function buildTable(){const body=$('sieveBody');body.innerHTML='';sieves.forEach(s=>{let tr=document.createElement('tr');tr.innerHTML=`<td><b>${s}</b></td><td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td><td id="ret-${s}">-</td><td id="cum-${s}">-</td><td id="pas-${s}">-</td><td id="rng-${s}">-</td><td id="cmp-${s}">-</td>`;body.appendChild(tr)});document.querySelectorAll('input.numeric').forEach(el=>el.addEventListener('input',()=>{let v=cleanNumeric(el.value);if(el.value!==v)el.value=v;invalidate();}));}
+function invalidate(){lastResult=null;['tvFm','tvPassing200'].forEach(id=>$(id).textContent='-');$('warnBox').textContent='';sieves.forEach(s=>{['ret','cum','pas','cmp'].forEach(p=>$(p+'-'+s).textContent='-');$('cmp-'+s).className=''});drawChart()}
+function toggleCategoryFields(){const fine=$('materialCategory').value==='ریزدانه';$('baseModulusField').style.display=fine?'flex':'none';const cls=$('spClass'),old=cls.value;cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';Object.keys(ranges).filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن')).forEach(k=>cls.add(new Option(k,k)));if([...cls.options].some(o=>o.value===old))cls.value=old;updateRanges()}
+function updateRanges(){const r=ranges[$('spClass').value]||{};sieves.forEach(s=>$('rng-'+s).textContent=r[s]?r[s].join(' - ')+'%':'-');invalidate()}
+function calculate(){const total=number('totalWeight'),after=number('afterWash'),base=number('baseModulus'),cat=$('materialCategory').value,cls=$('spClass').value;if(!Number.isFinite(total)||total<=0)return alert('وزن کل نمونه باید عددی مثبت باشد.');if(!Number.isFinite(after)||after<=0||after>total)return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0))return alert('مدول نرمی مبنا باید مثبت باشد.');let weights={},sum=0,entered=false;for(const s of sieves){const v=$('w-'+s).value;if(v!==''&&(!Number.isFinite(Number(v))||Number(v)<0))return alert('وزن الک نامعتبر است.');weights[s]=v===''?0:Number(v);sum+=weights[s];if(v!=='')entered=true}if(!entered)return alert('وزن مانده حداقل یک الک را وارد کنید.');const washLoss=total-after,diff=Math.abs(after-sum),tol=total*.003,passing200=washLoss/total*100;let retained={},cumulative={},passing={},cum=0;for(const s of sieves){retained[s]=weights[s]/total*100;cum+=retained[s];cumulative[s]=cum;passing[s]=100-cum;}const hasPan=$('w-0.075').value!=='';if(!hasPan){passing['0.075']=passing200;}const fmSieves=['4.75','2.36','1.18','0.6','0.3','0.15'];const fm=fmSieves.reduce((acc,s)=>acc+cumulative[s],0)/100;let warnings=[];if(diff>tol)warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);if(cat==='ریزدانه'&&Math.abs(fm-base)>.2)warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');if(hasPan&&Math.abs(passing['0.075']-passing200)>.3)warnings.push('عبوری محاسبه‌شده از الک ۰٫۰۷۵ با افت وزن شستشو یکسان نیست؛ داده‌ها را کنترل کنید.');const r=ranges[cls]||{};for(const s of sieves){$('ret-'+s).textContent=retained[s].toFixed(1)+'%';$('cum-'+s).textContent=cumulative[s].toFixed(1)+'%';$('pas-'+s).textContent=passing[s].toFixed(1)+'%';let status='-';if(r[s]){let [lo,hi]=r[s];status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8?'منطبق':'نامنطبق'}$('cmp-'+s).textContent=status;$('cmp-'+s).className=status==='منطبق'?'ok':status==='نامنطبق'?'not-ok':''}$('tvFm').textContent=cat==='ریزدانه'?fm.toFixed(2):'-';$('tvPassing200').textContent=passing200.toFixed(2)+'%';$('warnBox').textContent=warnings.join(' | ');lastResult={weights,retained,cumulative,passing,passing200,fm,warnings,total,after,cls,cat};drawChart()}
+function drawChart(){const canvas=$('gradingChart'),width=Math.max(290,canvas.getBoundingClientRect().width),height=canvas.getBoundingClientRect().height||340,dpr=Math.min(window.devicePixelRatio||1,3);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);const c=canvas.getContext('2d');c.scale(dpr,dpr);c.fillStyle='white';c.fillRect(0,0,width,height);const m={left:42,right:13,top:15,bottom:53},pw=width-m.left-m.right,ph=height-m.top-m.bottom,min=.075,max=100;const x=v=>m.left+(Math.log10(v)-Math.log10(min))/(Math.log10(max)-Math.log10(min))*pw,y=v=>m.top+(100-v)/100*ph;c.font='10px Arial';c.textAlign='right';c.textBaseline='middle';for(let p=0;p<=100;p+=10){let yy=y(p);c.strokeStyle='#e5e7eb';c.lineWidth=.7;c.setLineDash([]);c.beginPath();c.moveTo(m.left,yy);c.lineTo(width-m.right,yy);c.stroke();c.fillStyle='#334155';c.fillText(String(p),m.left-6,yy)}const ticks=sieves.slice().reverse();c.textAlign='center';ticks.forEach((s,i)=>{let xx=x(Number(s));c.strokeStyle='#edf0f3';c.beginPath();c.moveTo(xx,m.top);c.lineTo(xx,m.top+ph);c.stroke();if(i%2===0||width>650){c.save();c.translate(xx,m.top+ph+8);c.rotate(-Math.PI/4);c.textAlign='right';c.fillStyle='#475569';c.fillText(s,0,0);c.restore()}});c.strokeStyle='#111';c.lineWidth=1;c.strokeRect(m.left,m.top,pw,ph);function line(points,color,dash,lw){if(points.length<2)return;c.beginPath();points.forEach(([sx,sy],i)=>i?c.lineTo(x(Number(sx)),y(sy)):c.moveTo(x(Number(sx)),y(sy)));c.strokeStyle=color;c.lineWidth=lw;c.setLineDash(dash);c.stroke();c.setLineDash([])}const range=ranges[$('spClass').value]||{};const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);if(lastResult){const sample=ticks.map(k=>[k,lastResult.passing[k]]);line(sample,'#dc0000',[5,4],1.7)}c.setLineDash([])}
+function resetAll(){document.querySelectorAll('input.numeric').forEach(e=>e.value='');$('baseModulus').value='2.90';invalidate()}
+function exportPDF(){if(!lastResult)return alert('ابتدا محاسبه را انجام دهید.');if(!window.jspdf)return alert('کتابخانه PDF بارگذاری نشده است. اتصال اینترنت یا بسته‌بندی محلی کتابخانه را بررسی کنید.');const {jsPDF}=window.jspdf,doc=new jsPDF();doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('Sieve Analysis Report - Standard 4977',105,17,{align:'center'});doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Company: '+ascii($('company').value),14,29);doc.text('Sample: '+ascii($('sampleId').value),14,35);doc.text('Date: '+ascii($('date').value),14,41);doc.text('Class: '+ascii(lastResult.cls),14,47);doc.text('Total weight: '+lastResult.total+' g    After wash: '+lastResult.after+' g',14,53);let y=64;doc.setFont('helvetica','bold');doc.text('Sieve(mm)',14,y);doc.text('Weight(g)',42,y);doc.text('Retained%',73,y);doc.text('Cumul.%',106,y);doc.text('Passing%',138,y);doc.text('Limits%',170,y);doc.line(12,y+2,199,y+2);doc.setFont('helvetica','normal');y+=8;for(const s of sieves){doc.text(s,14,y);doc.text(String(lastResult.weights[s]),42,y);doc.text(lastResult.retained[s].toFixed(1),73,y);doc.text(lastResult.cumulative[s].toFixed(1),106,y);doc.text(lastResult.passing[s].toFixed(1),138,y);const r=ranges[lastResult.cls]?.[s];doc.text(r?r.join('-'):'-',170,y);y+=6}y+=5;doc.text('F.M.: '+lastResult.fm.toFixed(2)+'     Passing #200: '+lastResult.passing200.toFixed(2)+'%',14,y);y+=7;const img=$('gradingChart').toDataURL('image/png');doc.addImage(img,'PNG',12,y,186,75);doc.save('Sieve_Report.pdf')}
+function ascii(s){return normalizeDigits(s).replace(/[^\x20-\x7e]/g,' ').slice(0,65)}
+$('spClass').addEventListener('change',updateRanges);$('materialName').addEventListener('change',invalidate);['totalWeight','afterWash','baseModulus'].forEach(id=>$(id).addEventListener('change',invalidate));window.addEventListener('resize',drawChart);buildTable();toggleCategoryFields();
+</script></body></html>
