@@ -27,7 +27,7 @@ td input.numeric{width:8ch;max-width:100%;padding:6px 2px;text-align:center;dire
 button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer}
 .btn-calc{background:var(--success)}.btn-pdf{background:var(--primary)}.btn-reset{background:#64748b}
 .ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}
-.chart-wrap{width:100%;overflow:hidden}
+.chart-wrap{width:100%;overflow-x:auto;overflow-y:hidden;direction:ltr}
 canvas{display:block;width:100%;height:340px}
 .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px;margin-top:6px}
 .legend span:before{content:'';display:inline-block;width:28px;vertical-align:middle;margin-left:5px;border-top:2px solid #111}
@@ -116,7 +116,7 @@ button:active{transform:translateY(1px)}button:hover{filter:brightness(1.09)}
   <h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2>
   <div class="chart-wrap"><canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas></div>
   <div class="legend"><span>حدود استاندارد</span><span class="sample">درصد عبوری نمونه</span></div>
-  <p class="note">محور افقی: نمره الک (موقعیت لگاریتمی برحسب میلی‌متر) | محور عمودی: درصد عبوری (خطی، با حاشیه نمایشی ۱۰ درصد)</p>
+  
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -263,113 +263,91 @@ function calculate(){
    برچسب‌های افقی و خطوط عمودی خط‌چین از نقاط منحنی تا صفر درصد */
 function drawChart(){
   const canvas=$('gradingChart');
-  const width=Math.max(290,canvas.getBoundingClientRect().width);
-  const height=canvas.getBoundingClientRect().height||340;
+  const wrap=canvas.parentElement;
+  // فضای کافی برای برچسب‌های افقی، با پیمایش افقی در موبایل
+  const width=Math.max(780,wrap.clientWidth);
+  const height=350;
   const dpr=Math.min(window.devicePixelRatio||1,3);
+  canvas.style.width=width+'px';
+  canvas.style.height=height+'px';
   canvas.width=Math.round(width*dpr);
   canvas.height=Math.round(height*dpr);
   const c=canvas.getContext('2d');
   c.setTransform(dpr,0,0,dpr,0,0);
-  c.fillStyle='white';
-  c.fillRect(0,0,width,height);
+  c.fillStyle='#fff';c.fillRect(0,0,width,height);
 
-  const m={left:42,right:13,top:15,bottom:48};
+  const m={left:68,right:22,top:65,bottom:50};
   const pw=width-m.left-m.right,ph=height-m.top-m.bottom;
-  const logMin=Math.log10(0.001),logMax=Math.log10(100),logSpan=logMax-logMin;
-  const xMin=logMin-logSpan*.10,xMax=logMax+logSpan*.10;
-  const yMin=-10,yMax=110;
+  const range=ranges[$('spClass').value]||{};
+  const rangeKeys=Object.keys(range).map(Number);
+  const ascending=sieves.map(Number).sort((a,b)=>a-b);
+  // اولین الک با عبوری ۱۰۰٪ از سمت الک‌های ریزتر
+  const firstFull=lastResult ? ascending.find(v=>lastResult.passing[String(v)]>=99.999999) : undefined;
+  // بازه به جای بزرگترین الک جدول، از اولین الک ۱۰۰٪ و انتهای حدود استاندارد تعیین می‌شود
+  const upper=Math.max(firstFull||0,...rangeKeys,9.5);
+  const lower=Math.min(0.075,...rangeKeys);
+  const logLow=Math.log10(lower),logHigh=Math.log10(upper);
+  const pad=(logHigh-logLow)*0.045;
+  const xMin=logLow-pad,xMax=logHigh+pad;
   const x=v=>m.left+(Math.log10(Number(v))-xMin)/(xMax-xMin)*pw;
-  const y=v=>m.top+(yMax-v)/(yMax-yMin)*ph;
+  const y=v=>m.top+(110-v)/120*ph;
+  const inside=v=>Number(v)>=lower&&Number(v)<=upper;
+  const ticks=sieves.slice().reverse().filter(inside);
 
-  c.font='10px Arial';
-  c.textAlign='right';
-  c.textBaseline='middle';
-
+  c.font='10px Arial';c.textBaseline='middle';c.textAlign='right';
   for(let p=0;p<=100;p+=10){
     const yy=y(p);
-    c.beginPath();c.strokeStyle='#e5e7eb';c.lineWidth=.7;c.setLineDash([]);
+    c.beginPath();c.setLineDash([]);c.strokeStyle='#e3e8f0';c.lineWidth=.75;
     c.moveTo(m.left,yy);c.lineTo(width-m.right,yy);c.stroke();
-    c.fillStyle='#334155';c.fillText(String(p),m.left-6,yy);
+    c.fillStyle='#334155';c.fillText(String(p),m.left-9,yy);
   }
-
-  // خطوط شبکه عمودی؛ همه برچسب‌ها افقی
-  const ticks=sieves.slice().reverse();
-  c.textAlign='center';c.textBaseline='top';c.font='10px Arial';
+  // خطوط عمودی سیاه و خط‌چین، تمام ارتفاع صفر تا صد
+  c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
   ticks.forEach(s=>{
-    const xx=x(Number(s));
-    c.beginPath();c.strokeStyle='#edf0f3';c.lineWidth=.7;c.setLineDash([]);
-    c.moveTo(xx,m.top);c.lineTo(xx,m.top+ph);c.stroke();
-    c.fillStyle='#475569';
-    c.fillText(sieveLabels[s]||s,xx,m.top+ph+7);
+    c.beginPath();c.setLineDash([4,4]);c.lineWidth=.85;c.strokeStyle='#111827';
+    c.moveTo(x(s),y(100));c.lineTo(x(s),y(0));c.stroke();
   });
+  c.restore();c.setLineDash([]);
 
-  c.setLineDash([]);c.strokeStyle='#111';c.lineWidth=1;
+  // برچسب شماره الک‌ها بالای نمودار، افقی و در دو ردیف برای جلوگیری از تداخل
+  c.font='10px Arial';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#26374d';
+  const placed=[[],[]];
+  ticks.forEach(s=>{
+    const label=sieveLabels[s]||s,xx=x(s);
+    const half=c.measureText(label).width/2+4;
+    let row=placed.findIndex(items=>items.every(p=>Math.abs(p.x-xx)>p.half+half));
+    if(row<0)return; // روی عرض‌های خیلی کم، برچسب‌های هم‌پوشان حذف می‌شوند
+    placed[row].push({x:xx,half});
+    c.fillText(label,xx,row===0?m.top-35:m.top-19);
+    c.beginPath();c.setLineDash([]);c.strokeStyle='#64748b';c.lineWidth=.6;
+    c.moveTo(xx,m.top-10);c.lineTo(xx,m.top-2);c.stroke();
+  });
+  c.strokeStyle='#26374d';c.lineWidth=1;c.setLineDash([]);
   c.strokeRect(m.left,m.top,pw,ph);
 
   function line(points,color,dash,lw){
     if(points.length<2)return;
-    c.beginPath();
-    points.forEach(([sx,sy],i)=>{
-      if(i===0)c.moveTo(x(sx),y(sy));
-      else c.lineTo(x(sx),y(sy));
+    c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
+    c.beginPath();points.forEach(([sx,sy],i)=>{
+      if(i===0)c.moveTo(x(sx),y(sy));else c.lineTo(x(sx),y(sy));
     });
-    c.strokeStyle=color;c.lineWidth=lw;c.setLineDash(dash);c.stroke();c.setLineDash([]);
+    c.strokeStyle=color;c.lineWidth=lw;c.setLineDash(dash);c.stroke();c.restore();
   }
-
-  const range=ranges[$('spClass').value]||{};
   const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
   line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
   line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
-
   if(lastResult){
-    const sample=ticks.map(s=>[s,lastResult.passing[s]])
-      .filter(([s,p])=>Number(s)>0&&Number.isFinite(p));
-
-    // خطوط عمودی خط‌چین قرمز از نقطه منحنی تا خط صفر درصد
-    c.save();
-    c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
-    c.strokeStyle='#dc0000';c.lineWidth=.8;c.setLineDash([3,3]);
-    sample.forEach(([s,p])=>{
-      c.beginPath();c.moveTo(x(s),y(p));c.lineTo(x(s),y(0));c.stroke();
-    });
-    c.restore();c.setLineDash([]);
-
+    const sample=ticks.map(s=>[s,lastResult.passing[s]]).filter(([s,p])=>Number.isFinite(p));
     line(sample,'#dc0000',[5,4],1.7);
     c.fillStyle='#dc0000';
-    sample.forEach(([s,p])=>{
-      c.beginPath();c.arc(x(s),y(p),2,0,Math.PI*2);c.fill();
-    });
+    sample.forEach(([s,p])=>{c.beginPath();c.arc(x(s),y(p),2.5,0,Math.PI*2);c.fill();});
   }
-  c.setLineDash([]);
-}
-
-
-/* پیام‌های کاربرد سنگدانه ریز بر اساس حدود عبوری الک ۲۰۰ */
-function showUsageMessages(){
- const root=$('usageResults');root.innerHTML='';
- if(!lastResult||lastResult.cat!=='ریزدانه')return;
- const cls=lastResult.cls;
- if(!/^ماسه رده[123]$/.test(cls))return;
- const p=lastResult.passing200;
- const crushed=$('materialName').value.includes('شکسته');
- const special=cls==='ماسه رده3';
- const standard=special?'بتن خودتراکم':'بتن معمولی و مسلح';
- const normalMax=crushed?(special?16:7):(special?7:5);
- const wearMax=crushed?(special?9:5):(special?5:3);
- [
-  {purpose:standard,limit:normalMax},
-  {purpose:'بتن تحت تأثیر سایش',limit:wearMax}
- ].forEach(({purpose,limit})=>{
-  const eligible=p<=limit+1e-9;
-  const el=document.createElement('div');
-  el.className='usage-message '+(eligible?'allow':'deny');
-  el.textContent=`استفاده از این سنگدانه ریز برای ساخت ${purpose} ${eligible?'مجاز است.':'مجاز نیست.'}`;
-  root.appendChild(el);
- });
- const note=document.createElement('div');
- note.className='note';
- note.textContent='این پیام‌ها بر اساس عبوری الک ۲۰۰ و حدود انتخاب‌شده جدول ۱ استاندارد ۳۰۲ هستند؛ سایر الزامات پذیرش و دوام جداگانه بررسی شوند.';
- root.appendChild(note);
+  // عناوین محور؛ اعداد پایین محور حذف شده‌اند
+  c.fillStyle='#243c5b';c.font='bold 12px Tahoma,Arial';
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
+  c.save();c.translate(18,m.top+ph/2);c.rotate(-Math.PI/2);
+  c.fillText('درصد عبوری',0,0);c.restore();
 }
 
 function resetAll(){
