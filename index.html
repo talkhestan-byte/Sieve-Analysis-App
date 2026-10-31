@@ -10,10 +10,10 @@
 body{font:13px Tahoma,Arial,sans-serif;background:var(--bg);margin:0;padding:12px;color:#1e293b}
 .card{background:white;border-radius:10px;padding:14px;margin:0 auto 14px;max-width:1000px;box-shadow:0 2px 8px #0001}
 h2{text-align:center;color:var(--primary);font-size:17px;margin:2px 0 16px}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px;margin-bottom:12px}
-.field{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:4px 6px;margin-bottom:4px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0}
 .field label{font-size:12px;font-weight:bold;flex:1}
-.field input,.field select{font:12px Tahoma,Arial,sans-serif;border:1px solid var(--border);border-radius:6px;padding:9px 5px;min-width:0;width:145px;max-width:55%;background:white;text-align:center}
+.field input,.field select{font:12px Tahoma,Arial,sans-serif;border:1px solid var(--border);border-radius:6px;padding:4px 4px;min-width:0;width:145px;max-width:55%;background:white;text-align:center}
 .field input.numeric{width:8ch;max-width:8ch;direction:ltr;font-family:Arial,sans-serif;font-size:14px}
 .field input:focus,.field select:focus{outline:2px solid var(--primary)}
 .table-container{overflow-x:auto}
@@ -23,17 +23,27 @@ th{background:#f1f5f9}
 td input.numeric{width:8ch;max-width:100%;padding:6px 2px;text-align:center;direction:ltr;border:1px solid var(--border);border-radius:4px;font:12px Arial,sans-serif}
 .results-box{display:flex;gap:10px;justify-content:space-around;flex-wrap:wrap;background:#e0f2fe;padding:12px;border-radius:8px;margin-top:12px;font-weight:bold;color:#0369a1}
 .warning-box{color:var(--danger);font-size:12px;margin-top:10px;line-height:1.9}
-.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
 button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer}
-.btn-calc{background:var(--success)}.btn-pdf{background:var(--primary)}.btn-reset{background:#64748b}
-.ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}
+.btn-calc{background:var(--success)}
+.btn-pdf{background:var(--primary)}
+.btn-reset{background:#64748b}
+.ok{color:var(--success);font-weight:bold}
+.not-ok{color:var(--danger);font-weight:bold}
 .chart-wrap{width:100%;overflow-x:auto;overflow-y:hidden;direction:ltr}
 canvas{display:block;width:100%;height:340px}
 .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px;margin-top:6px}
 .legend span:before{content:'';display:inline-block;width:28px;vertical-align:middle;margin-left:5px;border-top:2px solid #111}
 .legend .sample:before{border-top:2px dashed #dc0000}
 .note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}
-@media(max-width:420px){body{padding:7px}.card{padding:10px}.row{grid-template-columns:1fr}.field input,.field select{width:150px}canvas{height:300px}}
+@media(max-width:420px){
+ body{padding:7px}
+ .card{padding:10px}
+ .row{grid-template-columns:1fr}
+ .field input,.field select{width:150px}
+ canvas{height:300px}
+}
+
 /* فشرده‌سازی جدول و ثابت‌ماندن ستون مشخصات الک */
 .table-container table{width:max-content;min-width:100%;table-layout:fixed;font-size:10px}
 .table-container th,.table-container td{padding:5px 2px;min-width:0;white-space:nowrap}
@@ -45,14 +55,18 @@ canvas{display:block;width:100%;height:340px}
 .table-container th:nth-child(7),.table-container td:nth-child(7){width:58px;min-width:58px}
 .table-container td input.numeric{width:6.5ch;max-width:100%;padding:4px 1px;font-size:11px}
 
-/* Vista-inspired glass interface; compact, horizontally scrollable results */
+/* پوسته شیشه‌ای الهام‌گرفته از ویستا */
 body{background:radial-gradient(circle at 12% 10%,#9ee7ff 0,transparent 35%),radial-gradient(circle at 85% 25%,#c8b5ff 0,transparent 38%),linear-gradient(145deg,#e4f5ff,#e6e9ff 55%,#dcf9f4);min-height:100vh}
 .card{background:linear-gradient(145deg,rgba(255,255,255,.91),rgba(235,246,255,.78));border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 30px #254b832b,inset 0 1px 0 #fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:16px}
 h2{color:#124a9c;text-shadow:0 1px 0 #fff;border-bottom:1px solid #b9d6f4;padding-bottom:12px}
 .field input,.field select{background:linear-gradient(#fff,#f2f8ff);box-shadow:inset 0 1px 3px #204b7616,0 1px 0 white;border-color:#b7cce4}
 button{border:1px solid #ffffff99;box-shadow:inset 0 2px 1px #ffffff70,inset 0 -3px 4px #00000016,0 4px 9px #17385d36;text-shadow:0 1px 1px #0004;transition:filter .15s,transform .15s}
-button:active{transform:translateY(1px)}button:hover{filter:brightness(1.09)}
-.btn-calc{background:linear-gradient(#46d7a0,#05865c)}.btn-pdf{background:linear-gradient(#66b9ff,#0766c6)}.btn-reset{background:linear-gradient(#a8b7d0,#53647f)}
+button:active{transform:translateY(1px)}
+button:hover{filter:brightness(1.09)}
+.btn-calc{background:linear-gradient(#46d7a0,#05865c)}
+.btn-pdf{background:linear-gradient(#66b9ff,#0766c6)}
+.btn-print{background:linear-gradient(#b6a2ff,#6750b8)}
+.btn-reset{background:linear-gradient(#a8b7d0,#53647f)}
 .results-box{background:linear-gradient(120deg,#d7f4ff,#e3e5ff);border:1px solid #fff;box-shadow:inset 0 1px 4px #3268a51b}
 .table-container{border:1px solid #b8d2ee;border-radius:9px;background:#fff}
 .table-container table{font-size:9px;min-width:0}
@@ -66,6 +80,8 @@ button:active{transform:translateY(1px)}button:hover{filter:brightness(1.09)}
 .table-container th{background:linear-gradient(#edf7ff,#d8eafb);color:#18447a}
 .table-container tbody tr:nth-child(even) td{background:#f4f9ff}
 .table-container tbody tr:nth-child(even) td:first-child{background:#edf5ff}
+
+/* پیام‌های شرطی */
 .usage-results{margin-top:13px;display:grid;gap:7px}
 .usage-results:empty{display:none}
 .usage-message{padding:10px 12px;border-radius:9px;font-size:12px;font-weight:bold;line-height:1.9;border:1px solid;box-shadow:inset 0 1px 0 #fff,0 2px 6px #0000000a}
@@ -73,50 +89,83 @@ button:active{transform:translateY(1px)}button:hover{filter:brightness(1.09)}
 .usage-message.deny{color:#a11c2b;border-color:#f0a7ad;background:linear-gradient(#fff3f3,#ffdddd)}
 .usage-message.caution{color:#855008;border-color:#f0d29a;background:linear-gradient(#fffbee,#fff0cc)}
 
+@media print{
+ @page{size:A4 landscape;margin:10mm}
+ body{background:#fff!important;padding:0!important;color:#111}
+ .card{max-width:none;margin:0 0 8mm;padding:8px;border:1px solid #ccc;box-shadow:none;backdrop-filter:none;background:#fff!important;break-inside:avoid}
+ .buttons{display:none!important}
+ .chart-wrap{overflow:visible}
+ canvas{max-width:100%!important;height:280px!important}
+ .table-container{overflow:visible}
+ .table-container table{width:100%;min-width:0}
+ .table-container th:first-child,.table-container td:first-child{position:static;box-shadow:none}
+}
 </style>
 </head>
 <body>
+
 <div class="card">
-  <h2>تحلیل دانه‌بندی سنگدانه (استاندارد ۴۹۷۷)</h2>
-  <div class="row">
-    <div class="field"><label for="company">نام شرکت</label><input id="company" placeholder="اختیاری"></div>
-    <div class="field"><label for="sampleId">شماره نمونه</label><input id="sampleId" placeholder="اختیاری"></div>
-    <div class="field"><label for="date">تاریخ</label><input id="date" placeholder="۱۴۰۵/۰۸/۰۹"></div>
+ <h2>تحلیل دانه‌بندی سنگدانه (استاندارد ۴۹۷۷)</h2>
+ <div class="row">
+  <div class="field"><label for="company">نام شرکت</label><input id="company" placeholder="اختیاری"></div>
+  <div class="field"><label for="sampleId">شماره نمونه</label><input id="sampleId" placeholder="اختیاری"></div>
+  <div class="field"><label for="date">تاریخ</label><input id="date" placeholder="۱۴۰۵/۰۸/۰۹"></div>
+ </div>
+ <div class="row">
+  <div class="field">
+   <label for="materialName">نام سنگدانه</label>
+   <select id="materialName">
+    <option>ماسه طبیعی</option>
+    <option>شن طبیعی</option>
+    <option>ماسه شکسته</option>
+    <option>شن شکسته</option>
+    <option>مخلوط شن و ماسه</option>
+   </select>
   </div>
-  <div class="row">
-    <div class="field"><label for="materialName">نام سنگدانه</label><select id="materialName"><option>ماسه طبیعی</option><option>شن طبیعی</option><option>ماسه شکسته</option><option>شن شکسته</option><option>مخلوط شن و ماسه</option></select></div>
-    <div class="field"><label for="materialCategory">نوع سنگدانه</label><select id="materialCategory" onchange="toggleCategoryFields()"><option>ریزدانه</option><option>درشت‌دانه</option></select></div>
-    <div class="field"><label for="spClass">کلاس دانه‌بندی</label><select id="spClass"></select></div>
+  <div class="field">
+   <label for="materialCategory">نوع سنگدانه</label>
+   <select id="materialCategory" onchange="toggleCategoryFields()">
+    <option>ریزدانه</option>
+    <option>درشت‌دانه</option>
+   </select>
   </div>
-  <div class="row">
-    <div class="field"><label for="totalWeight">وزن کل نمونه (گرم)</label><input id="totalWeight" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
-    <div class="field"><label for="afterWash">وزن بعد از شستشو (گرم)</label><input id="afterWash" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
-    <div class="field" id="baseModulusField"><label for="baseModulus">مدول نرمی مبنا</label><input id="baseModulus" class="numeric" type="text" inputmode="decimal" maxlength="6" value="2.90"></div>
-  </div>
+  <div class="field"><label for="spClass">کلاس دانه‌بندی</label><select id="spClass"></select></div>
+ </div>
+ <div class="row">
+  <div class="field"><label for="totalWeight">وزن کل نمونه (گرم)</label><input id="totalWeight" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
+  <div class="field"><label for="afterWash">وزن بعد از شستشو (گرم)</label><input id="afterWash" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
+  <div class="field" id="baseModulusField"><label for="baseModulus">مدول نرمی مبنا</label><input id="baseModulus" class="numeric" type="text" inputmode="decimal" maxlength="6" value="2.90"></div>
+ </div>
 </div>
 
 <div class="card">
-  <h2>جدول الک‌ها</h2>
-  <div class="table-container">
-    <table>
-      <thead><tr><th>نمره الک</th><th>وزن مانده (gr)</th><th>مانده (%)</th><th>تجمعی (%)</th><th>عبوری (%)</th><th>محدوده مجاز</th><th>انطباق</th></tr></thead>
-      <tbody id="sieveBody"></tbody>
-    </table>
-  </div>
-  <div class="results-box"><span>مدول نرمی: <b id="tvFm">-</b></span><span>عبوری از الک ۲۰۰: <b id="tvPassing200">-</b></span></div>
-  <div class="warning-box" id="warnBox"></div><div class="usage-results" id="usageResults" aria-live="polite"></div>
-  <div class="buttons">
-    <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
-    <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
-  </div>
+ <h2>جدول الک‌ها</h2>
+ <div class="table-container">
+  <table>
+   <thead>
+    <tr><th>نمره الک</th><th>وزن مانده (gr)</th><th>مانده (%)</th><th>تجمعی (%)</th><th>عبوری (%)</th><th>محدوده مجاز</th><th>انطباق</th></tr>
+   </thead>
+   <tbody id="sieveBody"></tbody>
+  </table>
+ </div>
+ <div class="results-box">
+  <span>مدول نرمی: <b id="tvFm">-</b></span>
+  <span>عبوری از الک ۲۰۰: <b id="tvPassing200">-</b></span>
+ </div>
+ <div class="warning-box" id="warnBox"></div>
+ <div class="usage-results" id="usageResults" aria-live="polite"></div>
+ <div class="buttons">
+  <button class="btn-calc" onclick="calculate()">محاسبه</button>
+  <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
+  <button class="btn-print" type="button" onclick="printReport()">چاپ / پرینت</button>
+  <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
+ </div>
 </div>
 
 <div class="card">
-  <h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2>
-  <div class="chart-wrap"><canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas></div>
-  <div class="legend"><span>حدود استاندارد</span><span class="sample">درصد عبوری نمونه</span></div>
-  
+ <h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2>
+ <div class="chart-wrap"><canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas></div>
+ <div class="legend"><span>حدود استاندارد</span><span class="sample">درصد عبوری نمونه</span></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -124,6 +173,7 @@ button:active{transform:translateY(1px)}button:hover{filter:brightness(1.09)}
 'use strict';
 
 const sieves=['100','90','75','63','50','37.5','25','19','12.5','9.5','4.75','2.36','1.18','0.6','0.3','0.15','0.075'];
+
 const ranges={
 'ماسه رده1':{'0.075':[0,3],'0.15':[0,10],'0.3':[5,30],'0.6':[25,60],'1.18':[50,85],'2.36':[80,100],'4.75':[95,100],'9.5':[100,100]},
 'ماسه رده2':{'0.075':[0,3],'0.15':[2,10],'0.3':[5,30],'0.6':[20,50],'1.18':[35,80],'2.36':[60,100],'4.75':[85,100],'9.5':[100,100]},
@@ -144,257 +194,454 @@ const ranges={
 'شن رده 2':{'19':[0,5],'37.5':[0,15],'50':[35,70],'63':[90,100],'75':[100,100]},
 'شن رده 1':{'19':[0,5],'37.5':[0,15],'63':[25,60],'90':[90,100],'100':[100,100]}
 };
-const sieveLabels={'0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30','1.18':'#16','2.36':'#8','4.75':'#4','9.5':'3/8″','12.5':'1/2″','19':'3/4″','25':'1″','37.5':'1½″','50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'};
+
+const sieveLabels={
+'0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30','1.18':'#16',
+'2.36':'#8','4.75':'#4','9.5':'3/8″','12.5':'1/2″','19':'3/4″',
+'25':'1″','37.5':'1½″','50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'
+};
+
 const $=id=>document.getElementById(id);
 let lastResult=null;
 
 function normalizeDigits(v){
-  return String(v).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776))
-    .replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632))
-    .replace(/٫/g,'.').replace(/٬/g,'');
+ return String(v)
+  .replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776))
+  .replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632))
+  .replace(/٫/g,'.').replace(/٬/g,'');
 }
+
 function cleanNumeric(v){
-  v=normalizeDigits(v).replace(/[^0-9.]/g,'');
-  let dot=v.indexOf('.');
-  if(dot>=0)v=v.slice(0,dot+1)+v.slice(dot+1).replace(/\./g,'');
-  return v.slice(0,6);
+ v=normalizeDigits(v).replace(/[^0-9.]/g,'');
+ let dot=v.indexOf('.');
+ if(dot>=0)v=v.slice(0,dot+1)+v.slice(dot+1).replace(/\./g,'');
+ return v.slice(0,6);
 }
+
 function number(id){
-  const v=normalizeDigits($(id).value);
-  return v.trim()===''?NaN:Number(v);
+ const v=normalizeDigits($(id).value);
+ return v.trim()===''?NaN:Number(v);
 }
+
 function buildTable(){
-  const body=$('sieveBody');
-  body.innerHTML='';
-  sieves.forEach(s=>{
-    let tr=document.createElement('tr');
-    tr.innerHTML=`<td><b>${sieveLabels[s]||s}</b></td><td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td><td id="ret-${s}">-</td><td id="cum-${s}">-</td><td id="pas-${s}">-</td><td id="rng-${s}">-</td><td id="cmp-${s}">-</td>`;
-    body.appendChild(tr);
+ const body=$('sieveBody');
+ body.innerHTML='';
+ sieves.forEach(s=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><b>${sieveLabels[s]||s}</b></td>
+  <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
+  <td id="ret-${s}">-</td><td id="cum-${s}">-</td>
+  <td id="pas-${s}">-</td><td id="rng-${s}">-</td><td id="cmp-${s}">-</td>`;
+  body.appendChild(tr);
+ });
+ document.querySelectorAll('input.numeric').forEach(el=>{
+  el.addEventListener('input',()=>{
+   const v=cleanNumeric(el.value);
+   if(el.value!==v)el.value=v;
+   invalidate();
   });
-  document.querySelectorAll('input.numeric').forEach(el=>{
-    el.addEventListener('input',()=>{
-      let v=cleanNumeric(el.value);
-      if(el.value!==v)el.value=v;
-      invalidate();
-    });
-  });
+ });
 }
+
 function invalidate(){
-  lastResult=null;
-  ['tvFm','tvPassing200'].forEach(id=>$(id).textContent='-');
-  $('warnBox').textContent='';$('usageResults').innerHTML='';
-  sieves.forEach(s=>{
-    ['ret','cum','pas','cmp'].forEach(p=>$(p+'-'+s).textContent='-');
-    $('cmp-'+s).className='';
-  });
-  drawChart();
+ lastResult=null;
+ ['tvFm','tvPassing200'].forEach(id=>$(id).textContent='-');
+ $('warnBox').textContent='';
+ $('usageResults').innerHTML='';
+ sieves.forEach(s=>{
+  ['ret','cum','pas','cmp'].forEach(p=>$(p+'-'+s).textContent='-');
+  $('cmp-'+s).className='';
+ });
+ drawChart();
 }
+
 function toggleCategoryFields(){
-  const fine=$('materialCategory').value==='ریزدانه';
-  $('baseModulusField').style.display=fine?'flex':'none';
-  const cls=$('spClass'),old=cls.value;
-  cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';
-  Object.keys(ranges).filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن')).forEach(k=>cls.add(new Option(k,k)));
-  if([...cls.options].some(o=>o.value===old))cls.value=old;
-  updateRanges();
+ const fine=$('materialCategory').value==='ریزدانه';
+ $('baseModulusField').style.display=fine?'flex':'none';
+ const cls=$('spClass');
+ const old=cls.value;
+ cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';
+ Object.keys(ranges).filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن')).forEach(k=>cls.add(new Option(k,k)));
+ if([...cls.options].some(o=>o.value===old))cls.value=old;
+ updateRanges();
 }
+
 function updateRanges(){
-  const r=ranges[$('spClass').value]||{};
-  sieves.forEach(s=>$('rng-'+s).textContent=r[s]?r[s].join(' - ')+'%':'-');
-  invalidate();
+ const r=ranges[$('spClass').value]||{};
+ sieves.forEach(s=>$('rng-'+s).textContent=r[s]?r[s].join(' - ')+'%':'-');
+ invalidate();
 }
+
 function calculate(){
-  const total=number('totalWeight'),after=number('afterWash'),base=number('baseModulus');
-  const cat=$('materialCategory').value,cls=$('spClass').value;
-  if(!Number.isFinite(total)||total<=0)return alert('وزن کل نمونه باید عددی مثبت باشد.');
-  if(!Number.isFinite(after)||after<=0||after>total)return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');
-  if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0))return alert('مدول نرمی مبنا باید مثبت باشد.');
+ const total=number('totalWeight');
+ const after=number('afterWash');
+ const base=number('baseModulus');
+ const cat=$('materialCategory').value;
+ const cls=$('spClass').value;
 
-  let weights={},sum=0,entered=false;
-  for(const s of sieves){
-    const raw=normalizeDigits($('w-'+s).value);
-    if(raw!==''&&(!Number.isFinite(Number(raw))||Number(raw)<0))return alert('وزن الک نامعتبر است.');
-    weights[s]=raw===''?0:Number(raw);
-    sum+=weights[s];
-    if(raw!=='')entered=true;
+ if(!Number.isFinite(total)||total<=0)
+  return alert('وزن کل نمونه باید عددی مثبت باشد.');
+ if(!Number.isFinite(after)||after<=0||after>total)
+  return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');
+ if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0))
+  return alert('مدول نرمی مبنا باید مثبت باشد.');
+
+ const weights={};
+ let sum=0,entered=false;
+
+ for(const s of sieves){
+  const raw=normalizeDigits($('w-'+s).value);
+  if(raw!==''&&(!Number.isFinite(Number(raw))||Number(raw)<0))
+   return alert('وزن الک نامعتبر است.');
+  weights[s]=raw===''?0:Number(raw);
+  sum+=weights[s];
+  if(raw!=='')entered=true;
+ }
+
+ if(!entered)return alert('وزن مانده حداقل یک الک را وارد کنید.');
+
+ const washLoss=total-after;
+ const diff=Math.abs(after-sum);
+ const tol=total*.003;
+ const passing200=washLoss/total*100;
+
+ const retained={},cumulative={},passing={};
+ let cum=0;
+
+ for(const s of sieves){
+  retained[s]=weights[s]/total*100;
+  cum+=retained[s];
+  cumulative[s]=cum;
+  passing[s]=100-cum;
+ }
+
+ const hasPan=$('w-0.075').value!=='';
+ if(!hasPan)passing['0.075']=passing200;
+
+ const fmSieves=['4.75','2.36','1.18','0.6','0.3','0.15'];
+ const fm=fmSieves.reduce((acc,s)=>acc+cumulative[s],0)/100;
+
+ const warnings=[];
+ if(diff>tol)warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
+ if(cat==='ریزدانه'&&Math.abs(fm-base)>.2)warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
+ if(hasPan&&Math.abs(passing['0.075']-passing200)>.3)warnings.push('عبوری محاسبه‌شده از الک ۰٫۰۷۵ با افت وزن شستشو یکسان نیست؛ داده‌ها را کنترل کنید.');
+
+ const r=ranges[cls]||{};
+
+ for(const s of sieves){
+  $('ret-'+s).textContent=retained[s].toFixed(1)+'%';
+  $('cum-'+s).textContent=cumulative[s].toFixed(1)+'%';
+  $('pas-'+s).textContent=passing[s].toFixed(1)+'%';
+
+  let status='-';
+  if(r[s]){
+   const [lo,hi]=r[s];
+   status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8?'منطبق':'نامنطبق';
   }
-  if(!entered)return alert('وزن مانده حداقل یک الک را وارد کنید.');
 
-  const washLoss=total-after,diff=Math.abs(after-sum),tol=total*.003,passing200=washLoss/total*100;
-  let retained={},cumulative={},passing={},cum=0;
-  for(const s of sieves){
-    retained[s]=weights[s]/total*100;
-    cum+=retained[s];
-    cumulative[s]=cum;
-    passing[s]=100-cum;
-  }
-  const hasPan=$('w-0.075').value!=='';
-  if(!hasPan)passing['0.075']=passing200;
+  $('cmp-'+s).textContent=status;
+  $('cmp-'+s).className=status==='منطبق'?'ok':status==='نامنطبق'?'not-ok':'';
+ }
 
-  const fmSieves=['4.75','2.36','1.18','0.6','0.3','0.15'];
-  const fm=fmSieves.reduce((acc,s)=>acc+cumulative[s],0)/100;
-  let warnings=[];
-  if(diff>tol)warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
-  if(cat==='ریزدانه'&&Math.abs(fm-base)>.2)warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
-  if(hasPan&&Math.abs(passing['0.075']-passing200)>.3)warnings.push('عبوری محاسبه‌شده از الک ۰٫۰۷۵ با افت وزن شستشو یکسان نیست؛ داده‌ها را کنترل کنید.');
+ $('tvFm').textContent=cat==='ریزدانه'?fm.toFixed(2):'-';
+ $('tvPassing200').textContent=passing200.toFixed(2)+'%';
+ $('warnBox').textContent=warnings.join(' | ');
 
-  const r=ranges[cls]||{};
-  for(const s of sieves){
-    $('ret-'+s).textContent=retained[s].toFixed(1)+'%';
-    $('cum-'+s).textContent=cumulative[s].toFixed(1)+'%';
-    $('pas-'+s).textContent=passing[s].toFixed(1)+'%';
-    let status='-';
-    if(r[s]){
-      let [lo,hi]=r[s];
-      status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8?'منطبق':'نامنطبق';
-    }
-    $('cmp-'+s).textContent=status;
-    $('cmp-'+s).className=status==='منطبق'?'ok':status==='نامنطبق'?'not-ok':'';
-  }
-  $('tvFm').textContent=cat==='ریزدانه'?fm.toFixed(2):'-';
-  $('tvPassing200').textContent=passing200.toFixed(2)+'%';
-  $('warnBox').textContent=warnings.join(' | ');
-  lastResult={weights,retained,cumulative,passing,passing200,fm,warnings,total,after,cls,cat};
-  showUsageMessages();
-  drawChart();
+ lastResult={weights,retained,cumulative,passing,passing200,fm,warnings,total,after,cls,cat};
+
+ showUsageMessages();
+ drawChart();
 }
 
-/* نمودار اصلاح‌شده: محور عمودی ۱۰- تا ۱۱۰، محور افقی لگاریتمی با حاشیه ۱۰٪،
-   برچسب‌های افقی و خطوط عمودی خط‌چین از نقاط منحنی تا صفر درصد */
+/* نمودار نیمه‌لگاریتمی با برچسب‌های دو ردیفه و عرض متناسب با صفحه */
 function drawChart(){
-  const canvas=$('gradingChart');
-  const wrap=canvas.parentElement;
-  // فضای کافی برای برچسب‌های افقی، با پیمایش افقی در موبایل
-  const width=Math.max(780,wrap.clientWidth);
-  const height=350;
-  const dpr=Math.min(window.devicePixelRatio||1,3);
-  canvas.style.width=width+'px';
-  canvas.style.height=height+'px';
-  canvas.width=Math.round(width*dpr);
-  canvas.height=Math.round(height*dpr);
-  const c=canvas.getContext('2d');
-  c.setTransform(dpr,0,0,dpr,0,0);
-  c.fillStyle='#fff';c.fillRect(0,0,width,height);
+ const canvas=$('gradingChart');
+ const wrap=canvas.parentElement;
+ const width=Math.max(280,wrap.clientWidth);
+ const height=350;
+ const dpr=Math.min(window.devicePixelRatio||1,3);
 
-  const m={left:68,right:22,top:65,bottom:50};
-  const pw=width-m.left-m.right,ph=height-m.top-m.bottom;
-  const range=ranges[$('spClass').value]||{};
-  const rangeKeys=Object.keys(range).map(Number);
-  const ascending=sieves.map(Number).sort((a,b)=>a-b);
-  // اولین الک با عبوری ۱۰۰٪ از سمت الک‌های ریزتر
-  const firstFull=lastResult ? ascending.find(v=>lastResult.passing[String(v)]>=99.999999) : undefined;
-  // بازه به جای بزرگترین الک جدول، از اولین الک ۱۰۰٪ و انتهای حدود استاندارد تعیین می‌شود
-  const upper=Math.max(firstFull||0,...rangeKeys,9.5);
-  const lower=Math.min(0.075,...rangeKeys);
-  const logLow=Math.log10(lower),logHigh=Math.log10(upper);
-  const pad=(logHigh-logLow)*0.045;
-  const xMin=logLow-pad,xMax=logHigh+pad;
-  const x=v=>m.left+(Math.log10(Number(v))-xMin)/(xMax-xMin)*pw;
-  const y=v=>m.top+(110-v)/120*ph;
-  const inside=v=>Number(v)>=lower&&Number(v)<=upper;
-  const ticks=sieves.slice().reverse().filter(inside);
+ canvas.style.width=width+'px';
+ canvas.style.height=height+'px';
+ canvas.width=Math.round(width*dpr);
+ canvas.height=Math.round(height*dpr);
 
-  c.font='10px Arial';c.textBaseline='middle';c.textAlign='right';
-  for(let p=0;p<=100;p+=10){
-    const yy=y(p);
-    c.beginPath();c.setLineDash([]);c.strokeStyle='#e3e8f0';c.lineWidth=.75;
-    c.moveTo(m.left,yy);c.lineTo(width-m.right,yy);c.stroke();
-    c.fillStyle='#334155';c.fillText(String(p),m.left-9,yy);
-  }
-  // خطوط عمودی سیاه و خط‌چین، تمام ارتفاع صفر تا صد
-  c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
-  ticks.forEach(s=>{
-    c.beginPath();c.setLineDash([4,4]);c.lineWidth=.85;c.strokeStyle='#111827';
-    c.moveTo(x(s),y(100));c.lineTo(x(s),y(0));c.stroke();
+ const c=canvas.getContext('2d');
+ c.setTransform(dpr,0,0,dpr,0,0);
+ c.fillStyle='#fff';
+ c.fillRect(0,0,width,height);
+
+ const m={left:68,right:22,top:65,bottom:50};
+ const pw=width-m.left-m.right;
+ const ph=height-m.top-m.bottom;
+ const range=ranges[$('spClass').value]||{};
+ const rangeKeys=Object.keys(range).map(Number);
+ const ascending=sieves.map(Number).sort((a,b)=>a-b);
+ const firstFull=lastResult?ascending.find(v=>lastResult.passing[String(v)]>=99.999999):undefined;
+ const upper=Math.max(firstFull||0,...rangeKeys,9.5);
+ const lower=Math.min(0.075,...rangeKeys);
+ const logLow=Math.log10(lower);
+ const logHigh=Math.log10(upper);
+ const pad=(logHigh-logLow)*0.045;
+ const xMin=logLow-pad;
+ const xMax=logHigh+pad;
+ const x=v=>m.left+(Math.log10(Number(v))-xMin)/(xMax-xMin)*pw;
+ const y=v=>m.top+(110-v)/120*ph;
+ const inside=v=>Number(v)>=lower&&Number(v)<=upper;
+ const ticks=sieves.slice().reverse().filter(inside);
+
+ c.font='10px Arial';
+ c.textBaseline='middle';
+ c.textAlign='right';
+
+ for(let p=0;p<=100;p+=10){
+  const yy=y(p);
+  c.beginPath();
+  c.setLineDash([]);
+  c.strokeStyle='#e3e8f0';
+  c.lineWidth=.75;
+  c.moveTo(m.left,yy);
+  c.lineTo(width-m.right,yy);
+  c.stroke();
+  c.fillStyle='#334155';
+  c.fillText(String(p),m.left-9,yy);
+ }
+
+ c.save();
+ c.beginPath();
+ c.rect(m.left,m.top,pw,ph);
+ c.clip();
+
+ ticks.forEach(s=>{
+  c.beginPath();
+  c.setLineDash([4,4]);
+  c.lineWidth=.85;
+  c.strokeStyle='#111827';
+  c.moveTo(x(s),y(100));
+  c.lineTo(x(s),y(0));
+  c.stroke();
+ });
+
+ c.restore();
+ c.setLineDash([]);
+
+ /* لیبل‌های افقی الک‌ها در دو ردیف */
+ c.font='9px Arial';
+ c.textAlign='center';
+ c.textBaseline='middle';
+ c.fillStyle='#26374d';
+
+ const placed=[[],[]];
+
+ ticks.forEach(s=>{
+  const label=sieveLabels[s]||s;
+  const xx=x(s);
+  const half=c.measureText(label).width/2+4;
+  const row=placed.findIndex(items=>items.every(p=>Math.abs(p.x-xx)>p.half+half));
+
+  if(row<0)return;
+
+  placed[row].push({x:xx,half});
+  c.fillText(label,xx,row===0?m.top-35:m.top-19);
+
+  c.beginPath();
+  c.setLineDash([]);
+  c.strokeStyle='#64748b';
+  c.lineWidth=.6;
+  c.moveTo(xx,m.top-10);
+  c.lineTo(xx,m.top-2);
+  c.stroke();
+ });
+
+ c.strokeStyle='#26374d';
+ c.lineWidth=1;
+ c.setLineDash([]);
+ c.strokeRect(m.left,m.top,pw,ph);
+
+ function line(points,color,dash,lw){
+  if(points.length<2)return;
+
+  c.save();
+  c.beginPath();
+  c.rect(m.left,m.top,pw,ph);
+  c.clip();
+
+  c.beginPath();
+  points.forEach(([sx,sy],i)=>{
+   if(i===0)c.moveTo(x(sx),y(sy));
+   else c.lineTo(x(sx),y(sy));
   });
-  c.restore();c.setLineDash([]);
 
-  // برچسب شماره الک‌ها بالای نمودار، افقی و در دو ردیف برای جلوگیری از تداخل
-  c.font='10px Arial';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#26374d';
-  const placed=[[],[]];
-  ticks.forEach(s=>{
-    const label=sieveLabels[s]||s,xx=x(s);
-    const half=c.measureText(label).width/2+4;
-    let row=placed.findIndex(items=>items.every(p=>Math.abs(p.x-xx)>p.half+half));
-    if(row<0)return; // روی عرض‌های خیلی کم، برچسب‌های هم‌پوشان حذف می‌شوند
-    placed[row].push({x:xx,half});
-    c.fillText(label,xx,row===0?m.top-35:m.top-19);
-    c.beginPath();c.setLineDash([]);c.strokeStyle='#64748b';c.lineWidth=.6;
-    c.moveTo(xx,m.top-10);c.lineTo(xx,m.top-2);c.stroke();
+  c.strokeStyle=color;
+  c.lineWidth=lw;
+  c.setLineDash(dash);
+  c.stroke();
+  c.restore();
+ }
+
+ const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
+ line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
+ line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
+
+ if(lastResult){
+  const sample=ticks.map(s=>[s,lastResult.passing[s]]).filter(([s,p])=>Number.isFinite(p));
+  line(sample,'#dc0000',[5,4],1.7);
+  c.fillStyle='#dc0000';
+
+  sample.forEach(([s,p])=>{
+   c.beginPath();
+   c.arc(x(s),y(p),2.5,0,Math.PI*2);
+   c.fill();
   });
-  c.strokeStyle='#26374d';c.lineWidth=1;c.setLineDash([]);
-  c.strokeRect(m.left,m.top,pw,ph);
+ }
 
-  function line(points,color,dash,lw){
-    if(points.length<2)return;
-    c.save();c.beginPath();c.rect(m.left,m.top,pw,ph);c.clip();
-    c.beginPath();points.forEach(([sx,sy],i)=>{
-      if(i===0)c.moveTo(x(sx),y(sy));else c.lineTo(x(sx),y(sy));
-    });
-    c.strokeStyle=color;c.lineWidth=lw;c.setLineDash(dash);c.stroke();c.restore();
-  }
-  const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
-  line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
-  line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
-  if(lastResult){
-    const sample=ticks.map(s=>[s,lastResult.passing[s]]).filter(([s,p])=>Number.isFinite(p));
-    line(sample,'#dc0000',[5,4],1.7);
-    c.fillStyle='#dc0000';
-    sample.forEach(([s,p])=>{c.beginPath();c.arc(x(s),y(p),2.5,0,Math.PI*2);c.fill();});
-  }
-  // عناوین محور؛ اعداد پایین محور حذف شده‌اند
-  c.fillStyle='#243c5b';c.font='bold 12px Tahoma,Arial';
-  c.textAlign='center';c.textBaseline='middle';
-  c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
-  c.save();c.translate(18,m.top+ph/2);c.rotate(-Math.PI/2);
-  c.fillText('درصد عبوری',0,0);c.restore();
+ c.fillStyle='#243c5b';
+ c.font='bold 12px Tahoma,Arial';
+ c.textAlign='center';
+ c.textBaseline='middle';
+ c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
+
+ c.save();
+ c.translate(18,m.top+ph/2);
+ c.rotate(-Math.PI/2);
+ c.fillText('درصد عبوری',0,0);
+ c.restore();
+}
+
+/* پیام‌های مجاز و غیرمجاز بر اساس عبوری الک ۲۰۰ */
+function showUsageMessages(){
+ const box=$('usageResults');
+ box.innerHTML='';
+
+ if(!lastResult||lastResult.cat!=='ریزدانه')return;
+
+ const pct=lastResult.passing200;
+ const material=$('materialName').value;
+ const crushed=material.includes('شکسته');
+ const cls=lastResult.cls;
+ const special=cls==='ماسه رده3';
+
+ let ordinaryMax,abrasionMax;
+
+ if(special){
+  ordinaryMax=crushed?16:7;
+  abrasionMax=crushed?9:5;
+ }else{
+  ordinaryMax=crushed?7:5;
+  abrasionMax=crushed?5:3;
+ }
+
+ const ordinaryName=special?'بتن خودتراکم':'بتن معمولی';
+
+ function add(message,allowed){
+  const el=document.createElement('div');
+  el.className='usage-message '+(allowed?'allow':'deny');
+  el.textContent=(allowed?'مجاز: ':'غیرمجاز: ')+message;
+  box.appendChild(el);
+ }
+
+ add(
+  `استفاده از سنگدانه ریز (${material}) برای ${ordinaryName} با عبوری ${pct.toFixed(2)}٪ از الک ۰٫۰۷۵ میلی‌متر ${pct<=ordinaryMax?'مجاز است.':'مجاز نیست.'}`,
+  pct<=ordinaryMax
+ );
+
+ add(
+  `استفاده از سنگدانه ریز (${material}) در بتن تحت سایش با عبوری ${pct.toFixed(2)}٪ از الک ۰٫۰۷۵ میلی‌متر ${pct<=abrasionMax?'مجاز است.':'مجاز نیست.'}`,
+  pct<=abrasionMax
+ );
+}
+
+/* چاپ گزارش */
+function printReport(){
+ if(!lastResult){
+  alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید؛ سپس چاپ کنید.');
+  return;
+ }
+
+ try{
+  window.print();
+ }catch(error){
+  alert('امکان اجرای چاپ در این مرورگر وجود ندارد. صفحه را از منوی مرورگر و گزینه چاپ باز کنید.');
+ }
 }
 
 function resetAll(){
-  document.querySelectorAll('input.numeric').forEach(e=>e.value='');
-  $('baseModulus').value='2.90';
-  invalidate();
+ document.querySelectorAll('input.numeric').forEach(e=>e.value='');
+ $('baseModulus').value='2.90';
+ invalidate();
 }
+
 function exportPDF(){
-  if(!lastResult)return alert('ابتدا محاسبه را انجام دهید.');
-  if(!window.jspdf)return alert('کتابخانه PDF بارگذاری نشده است. اتصال اینترنت یا بسته‌بندی محلی کتابخانه را بررسی کنید.');
-  const {jsPDF}=window.jspdf,doc=new jsPDF();
-  doc.setFont('helvetica','bold');doc.setFontSize(15);
-  doc.text('Sieve Analysis Report - Standard 4977',105,17,{align:'center'});
-  doc.setFontSize(9);doc.setFont('helvetica','normal');
-  doc.text('Company: '+ascii($('company').value),14,29);
-  doc.text('Sample: '+ascii($('sampleId').value),14,35);
-  doc.text('Date: '+ascii($('date').value),14,41);
-  doc.text('Class: '+ascii(lastResult.cls),14,47);
-  doc.text('Total weight: '+lastResult.total+' g    After wash: '+lastResult.after+' g',14,53);
-  let y=64;
-  doc.setFont('helvetica','bold');
-  doc.text('Sieve(mm)',14,y);doc.text('Weight(g)',42,y);doc.text('Retained%',73,y);
-  doc.text('Cumul.%',106,y);doc.text('Passing%',138,y);doc.text('Limits%',170,y);
-  doc.line(12,y+2,199,y+2);doc.setFont('helvetica','normal');y+=8;
-  for(const s of sieves){
-    doc.text(s,14,y);doc.text(String(lastResult.weights[s]),42,y);
-    doc.text(lastResult.retained[s].toFixed(1),73,y);
-    doc.text(lastResult.cumulative[s].toFixed(1),106,y);
-    doc.text(lastResult.passing[s].toFixed(1),138,y);
-    const r=ranges[lastResult.cls]?.[s];
-    doc.text(r?r.join('-'):'-',170,y);y+=6;
-  }
-  y+=5;
-  doc.text('F.M.: '+lastResult.fm.toFixed(2)+'     Passing #200: '+lastResult.passing200.toFixed(2)+'%',14,y);
-  y+=7;
-  const img=$('gradingChart').toDataURL('image/png');
-  doc.addImage(img,'PNG',12,y,186,75);
-  doc.save('Sieve_Report.pdf');
+ if(!lastResult)return alert('ابتدا محاسبه را انجام دهید.');
+ if(!window.jspdf)return alert('کتابخانه PDF بارگذاری نشده است. اتصال اینترنت یا بسته‌بندی محلی کتابخانه را بررسی کنید.');
+
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+
+ doc.setFont('helvetica','bold');
+ doc.setFontSize(15);
+ doc.text('Sieve Analysis Report - Standard 4977',105,17,{align:'center'});
+
+ doc.setFontSize(9);
+ doc.setFont('helvetica','normal');
+ doc.text('Company: '+ascii($('company').value),14,29);
+ doc.text('Sample: '+ascii($('sampleId').value),14,35);
+ doc.text('Date: '+ascii($('date').value),14,41);
+ doc.text('Class: '+ascii(lastResult.cls),14,47);
+ doc.text('Total weight: '+lastResult.total+' g    After wash: '+lastResult.after+' g',14,53);
+
+ let y=64;
+ doc.setFont('helvetica','bold');
+ doc.text('Sieve(mm)',14,y);
+ doc.text('Weight(g)',42,y);
+ doc.text('Retained%',73,y);
+ doc.text('Cumul.%',106,y);
+ doc.text('Passing%',138,y);
+ doc.text('Limits%',170,y);
+ doc.line(12,y+2,199,y+2);
+
+ doc.setFont('helvetica','normal');
+ y+=8;
+
+ for(const s of sieves){
+  doc.text(s,14,y);
+  doc.text(String(lastResult.weights[s]),42,y);
+  doc.text(lastResult.retained[s].toFixed(1),73,y);
+  doc.text(lastResult.cumulative[s].toFixed(1),106,y);
+  doc.text(lastResult.passing[s].toFixed(1),138,y);
+
+  const r=ranges[lastResult.cls]?.[s];
+  doc.text(r?r.join('-'):'-',170,y);
+  y+=6;
+ }
+
+ y+=5;
+ doc.text('F.M.: '+lastResult.fm.toFixed(2)+'     Passing #200: '+lastResult.passing200.toFixed(2)+'%',14,y);
+ y+=7;
+
+ const img=$('gradingChart').toDataURL('image/png');
+ doc.addImage(img,'PNG',12,y,186,75);
+ doc.save('Sieve_Report.pdf');
 }
-function ascii(s){return normalizeDigits(s).replace(/[^\x20-\x7e]/g,' ').slice(0,65)}
+
+function ascii(s){
+ return normalizeDigits(s).replace(/[^\x20-\x7e]/g,' ').slice(0,65);
+}
 
 $('spClass').addEventListener('change',updateRanges);
 $('materialName').addEventListener('change',invalidate);
-['totalWeight','afterWash','baseModulus'].forEach(id=>$(id).addEventListener('input',()=>{
-  const el=$(id),v=cleanNumeric(el.value);if(el.value!==v)el.value=v;invalidate();
-}));
+
+['totalWeight','afterWash','baseModulus'].forEach(id=>{
+ $(id).addEventListener('input',()=>{
+  const el=$(id);
+  const v=cleanNumeric(el.value);
+  if(el.value!==v)el.value=v;
+  invalidate();
+ });
+});
+
 window.addEventListener('resize',drawChart);
+
 buildTable();
 toggleCategoryFields();
 </script>
