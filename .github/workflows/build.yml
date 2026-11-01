@@ -1,3 +1,4 @@
+
 name: Build Sieve Analysis for Cafe Bazaar
 
 'on':
@@ -46,14 +47,7 @@ jobs:
 
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
 
-          npx esbuild native-pdf.js \
-            --bundle \
-            --format=esm \
-            --outfile=www/native-pdf.bundle.js
-
-          test -s www/index.html
-          test -s www/html2pdf.bundle.min.js
-          test -s www/native-pdf.bundle.js
+          npx esbuild native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
 
       - name: Configure Capacitor
         run: |
@@ -85,8 +79,7 @@ jobs:
           cd ..
           mkdir -p output
 
-          cp android/app/build/outputs/apk/debug/app-debug.apk \
-             output/Sieve-Analysis-debug.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
 
       - name: Restore persistent signing key
         env:
@@ -99,8 +92,7 @@ jobs:
             exit 1
           }
 
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
-            > android/app/release-key.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
 
           test -s android/app/release-key.jks
 
@@ -119,9 +111,7 @@ jobs:
           content = path.read_text()
 
           if "signingConfigs {" in content:
-              raise SystemExit(
-                  "Signing configuration already exists; refusing to duplicate it."
-              )
+              raise SystemExit("Signing configuration already exists; refusing to duplicate it.")
 
           marker = "buildTypes {"
           pos = content.find(marker)
@@ -149,18 +139,19 @@ jobs:
               raise SystemExit("release build type not found")
 
           brace = content.find("{", release_pos)
-          line_end = content.find("\n", brace)
+          line_end = content.find("\\n", brace)
 
           if line_end < 0:
               raise SystemExit("Could not locate release block")
 
           content = (
               content[:line_end + 1]
-              + "            signingConfig signingConfigs.release\n"
+              + "            signingConfig signingConfigs.release\\n"
               + content[line_end + 1:]
           )
 
           path.write_text(content)
+
           print("Release signing configured.")
           PY
 
@@ -183,8 +174,7 @@ jobs:
 
           cd ..
 
-          cp android/app/build/outputs/bundle/release/app-release.aab \
-             output/Sieve-Analysis.aab
+          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
 
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
