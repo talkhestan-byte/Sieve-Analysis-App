@@ -817,18 +817,14 @@ async function exportPDF(){
     return;
   }
 
-  // اطمینان از رسم کامل نمودار قبل از گرفتن تصویر
-  drawChart();
-  await new Promise(r=>setTimeout(r,150));
-
   const report=document.createElement('div');
+
   report.dir='rtl';
   report.lang='fa';
 
-  // به جای fixed، از absolute با مختصات منفی استفاده می‌کنیم
   report.style.cssText=[
-    'position:absolute',
-    'left:-10000px',
+    'position:fixed',
+    'left:0',
     'top:0',
     'width:1100px',
     'max-width:none',
@@ -838,7 +834,7 @@ async function exportPDF(){
     'color:#172b43',
     'font:14px Tahoma,Arial,sans-serif',
     'direction:rtl',
-    'z-index:1',
+    'z-index:2147483647',
     'opacity:1',
     'visibility:visible',
     'display:block'
@@ -851,17 +847,21 @@ async function exportPDF(){
 
   const meta=document.createElement('div');
   meta.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;font-size:13px;line-height:2;';
-  meta.innerHTML=
-    `<div>نام شرکت: ${safeText($('company').value)}</div>
+
+  meta.innerHTML=`
+    <div>نام شرکت: ${safeText($('company').value)}</div>
     <div>شماره نمونه: ${safeText($('sampleId').value)}</div>
     <div>تاریخ: ${safeText($('date').value)}</div>
     <div>نوع سنگدانه: ${safeText($('materialName').value)}</div>
     <div>کلاس: ${safeText(lastResult.cls)}</div>
-    <div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>`;
+    <div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>
+  `;
+
   report.appendChild(meta);
 
   const table=document.createElement('table');
   table.style.cssText='width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;direction:rtl;';
+
   table.innerHTML='<thead><tr>'+
     ['نمره الک','وزن مانده (گرم)','مانده (%)','تجمعی (%)','عبوری (%)','محدوده مجاز','انطباق']
       .map(t=>`<th style="background:#eaf2fb;border:1px solid #b9cce0;padding:7px">${t}</th>`)
@@ -869,9 +869,11 @@ async function exportPDF(){
     '</tr></thead>';
 
   const tbody=document.createElement('tbody');
+
   for(const sieve of sieves){
     const row=document.createElement('tr');
     const range=ranges[lastResult.cls]?.[sieve];
+
     const values=[
       sieveLabels[sieve]||sieve,
       String(lastResult.weights[sieve]),
@@ -881,19 +883,25 @@ async function exportPDF(){
       range?range.join(' - ')+'٪':'—',
       $('cmp-'+sieve).textContent
     ];
+
     row.innerHTML=values.map(v=>
       `<td style="border:1px solid #d5e0eb;padding:6px;text-align:center">${safeText(v)}</td>`
     ).join('');
+
     tbody.appendChild(row);
   }
+
   table.appendChild(tbody);
   report.appendChild(table);
 
   const summary=document.createElement('div');
+
   summary.style.cssText='margin:10px 0;padding:12px;background:#f0f7ff;border:1px solid #d5e5f5;border-radius:8px;line-height:2';
+
   summary.textContent=
     `مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | `+
     `عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
+
   report.appendChild(summary);
 
   const chartTitle=document.createElement('h3');
@@ -922,11 +930,8 @@ async function exportPDF(){
     await waitForPaint();
 
     if(chartImage.decode){
-      try{ await chartImage.decode(); }catch(e){}
+      await chartImage.decode();
     }
-
-    // اطمینان از رندر کامل المان
-    await new Promise(r=>setTimeout(r,200));
 
     const pdfBlob=await window.html2pdf()
       .set({
@@ -938,20 +943,9 @@ async function exportPDF(){
           backgroundColor:'#ffffff',
           logging:false,
           width:1100,
-          height:report.scrollHeight,
           windowWidth:1100,
-          windowHeight:report.scrollHeight,
           scrollX:0,
-          scrollY:0,
-          // مهم: المان را در کلون به حالت عادی برگردان تا کلیپ نشود
-          onclone:function(clonedDoc){
-            const el=clonedDoc.querySelector('div[data-pdf-report]');
-            if(el){
-              el.style.position='static';
-              el.style.left='0';
-              el.style.top='0';
-            }
-          }
+          scrollY:0
         },
         jsPDF:{
           unit:'mm',
@@ -969,13 +963,23 @@ async function exportPDF(){
 
     const base64=await new Promise((resolve,reject)=>{
       const reader=new FileReader();
+
       reader.onload=()=>{
         const result=String(reader.result||'');
         const comma=result.indexOf(',');
-        if(comma<0){ reject(new Error('تبدیل PDF به Base64 ناموفق بود.')); return; }
+
+        if(comma<0){
+          reject(new Error('تبدیل PDF به Base64 ناموفق بود.'));
+          return;
+        }
+
         resolve(result.slice(comma+1));
       };
-      reader.onerror=()=>{ reject(reader.error||new Error('خطا در خواندن فایل PDF.')); };
+
+      reader.onerror=()=>{
+        reject(reader.error||new Error('خطا در خواندن فایل PDF.'));
+      };
+
       reader.readAsDataURL(pdfBlob);
     });
 
@@ -1005,3 +1009,24 @@ async function exportPDF(){
     report.remove();
   }
 }
+
+$('spClass').addEventListener('change',updateRanges);
+$('materialName').addEventListener('change',invalidate);
+
+['totalWeight','afterWash','baseModulus'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    const el=$(id);
+    const v=cleanNumeric(el.value);
+    if(el.value!==v)el.value=v;
+    invalidate();
+  });
+});
+
+window.addEventListener('resize',drawChart);
+
+buildTable();
+toggleCategoryFields();
+</script>
+
+</body>
+</html>
