@@ -28,11 +28,8 @@ td input.numeric{width:8ch;max-width:100%;padding:6px 2px;text-align:center;dire
 button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer}
 .btn-calc{background:var(--success)}.btn-pdf{background:var(--primary)}.btn-reset{background:#64748b}
 .ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}
-.chart-wrap{width:100%;overflow-x:auto;overflow-y:hidden;direction:ltr}
+.chart-wrap{width:100%;overflow:hidden;direction:ltr}
 canvas{display:block;width:100%;height:340px}
-.legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px;margin-top:6px}
-.legend span:before{content:'';display:inline-block;width:28px;vertical-align:middle;margin-left:5px;border-top:2px solid #111}
-.legend .sample:before{border-top:2px dashed #dc0000}
 .note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}
 @media(max-width:420px){body{padding:7px}.card{padding:10px}.row{grid-template-columns:1fr}.field input,.field select{width:150px}canvas{height:300px}}
 
@@ -86,19 +83,16 @@ button:hover{filter:brightness(1.09)}
 .action-bar{display:flex;align-items:center;gap:10px;margin-top:12px}
 .action-bar button{flex:1;min-width:0}
 
-/* نمودار نیمه‌لگاریتمی با اسکرول افقی */
+/* نمودار */
 .chart-card{overflow:hidden}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
-.chart-wrap canvas{height:350px}
-.legend span{color:#41566f;font-weight:600}
-.legend span:first-child:before{border-top:2px solid #25364b}
-.legend .sample:before{border-top:2px dashed #d12e3d}
+.chart-wrap canvas{height:350px;width:100%}
 
 @media(max-width:420px){
  .app-title span{font-size:16px}
  .app-title small{font-size:11px}
  .chart-wrap{padding:2px}
- .chart-wrap canvas{height:350px}
+ .chart-wrap canvas{height:330px}
 }
 
 @media print{
@@ -209,13 +203,9 @@ button:hover{filter:brightness(1.09)}
 </div>
 
 <div class="card chart-card">
-  <h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2>
+  <h2>منحنی دانه بندی</h2>
   <div class="chart-wrap">
     <canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas>
-  </div>
-  <div class="legend">
-    <span>حدود استاندارد</span>
-    <span class="sample">درصد عبوری نمونه</span>
   </div>
 </div>
 
@@ -441,53 +431,72 @@ function calculate(){
   drawChart();
 }
 
-/* نمودار نیمه‌لگاریتمی:
-   مختصات هر لیبل دقیقاً با مختصات همان الک یکسان است.
-   محور تا یک فاصله لگاریتمی پس از بزرگ‌ترین الک ادامه دارد. */
+/* نمودار نیمه‌لگاریتمی با عرض متناسب صفحه
+   شروع محور: 0.002 میلی‌متر
+   شروع منحنی: الک 0.075 میلی‌متر
+   انتهای منحنی: کوچک‌ترین الک با عبوری 100 درصد
+   فضای خالی دو طرف منحنی: حدود دو عرض لیبل */
 function drawChart(){
   const canvas=$('gradingChart');
   const wrap=canvas.parentElement;
 
-  // عرض بیشتر برای جلوگیری از هم‌پوشانی لیبل‌ها در یک ردیف
-  const width=Math.max(1400,wrap.clientWidth);
+  const width=Math.max(300,Math.floor(wrap.clientWidth-8));
   const height=350;
   const dpr=Math.min(window.devicePixelRatio||1,2);
 
-  canvas.style.width=width+'px';
+  canvas.style.width='100%';
   canvas.style.height=height+'px';
   canvas.width=Math.round(width*dpr);
   canvas.height=Math.round(height*dpr);
 
   const c=canvas.getContext('2d');
   c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,width,height);
   c.fillStyle='#fff';
   c.fillRect(0,0,width,height);
 
-  const m={left:58,right:24,top:54,bottom:45};
+  const m={left:48,right:10,top:66,bottom:48};
   const pw=width-m.left-m.right;
   const ph=height-m.top-m.bottom;
 
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
+  const firstSieve=ascending[0];
 
-  // شروع از کوچک‌ترین الک واقعی
-  const lower=ascending[0];
+  // تعیین کوچک‌ترین الکی که عبوری نمونه از آن 100 درصد است
+  let terminalSieve=ascending[ascending.length-1];
 
-  // یک فاصله لگاریتمی پس از آخرین الک
-  const last=ascending[ascending.length-1];
-  const previous=ascending[ascending.length-2];
-  const upper=last*(last/previous);
+  if(lastResult){
+    const firstFull=ascending.find(s=>{
+      const value=lastResult.passing[String(s)];
+      return Number.isFinite(value)&&value>=99.999;
+    });
 
-  const logLow=Math.log10(lower);
-  const logHigh=Math.log10(upper);
+    if(firstFull!==undefined)terminalSieve=firstFull;
+  }
 
-  const x=v=>m.left+
-    (Math.log10(Number(v))-logLow)/(logHigh-logLow)*pw;
+  // الک بعدی بعد از کوچک‌ترین الک 100 درصدی
+  let terminalIndex=ascending.indexOf(terminalSieve);
+  let nextSieve=ascending[Math.min(terminalIndex+1,ascending.length-1)];
+
+  // فضای نمودار: دو عرض لیبل در هر طرف
+  const labelGap=Math.max(24,Math.min(34,width*.075));
+  const plotLeft=m.left+labelGap;
+  const plotRight=width-m.right-labelGap;
+  const plotWidth=Math.max(80,plotRight-plotLeft);
+
+  // مقیاس لگاریتمی بین اولین و آخرین الک قابل نمایش
+  const logLow=Math.log10(firstSieve);
+  const logHigh=Math.log10(Math.max(nextSieve,firstSieve*1.15));
+
+  const x=v=>{
+    const value=Math.max(firstSieve,Math.min(Number(v),Math.pow(10,logHigh)));
+    return plotLeft+
+      (Math.log10(value)-logLow)/(logHigh-logLow)*plotWidth;
+  };
 
   const y=v=>m.top+(100-v)/100*ph;
 
-  const ticks=ascending.slice();
-
-  // خطوط افقی اصلی هر ۱۰ درصد و فرعی هر ۵ درصد
+  // خطوط افقی اصلی هر 10 درصد و فرعی هر 5 درصد
   c.font='10px Arial';
   c.textBaseline='middle';
   c.textAlign='right';
@@ -504,66 +513,89 @@ function drawChart(){
     c.lineTo(width-m.right,yy);
     c.stroke();
 
-    // فقط خطوط اصلی دارای عدد هستند
     if(major){
       c.fillStyle='#334155';
-      c.fillText(String(p),m.left-9,yy);
+      c.fillText(String(p),m.left-8,yy);
     }
   }
 
-  // خطوط عمودی هر الک
+  // خطوط عمودی الک‌ها
   c.save();
   c.beginPath();
-  c.rect(m.left,m.top,pw,ph);
+  c.rect(m.left,m.top,width-m.left-m.right,ph);
   c.clip();
 
-  ticks.forEach(s=>{
+  ascending.forEach(s=>{
+    if(s>terminalSieve)return;
+
+    const xx=x(s);
     c.beginPath();
-    c.setLineDash([4,4]);
-    c.lineWidth=.8;
-    c.strokeStyle='#64748b';
-    c.moveTo(x(s),y(100));
-    c.lineTo(x(s),y(0));
+    c.setLineDash([3,3]);
+    c.lineWidth=.7;
+    c.strokeStyle='#9aaabd';
+    c.moveTo(xx,m.top);
+    c.lineTo(xx,m.top+ph);
     c.stroke();
   });
 
   c.restore();
   c.setLineDash([]);
 
-  // تمام لیبل‌ها در یک ردیف و دقیقاً روی مختصات الک
+  // خط محور افقی
+  c.beginPath();
+  c.strokeStyle='#26374d';
+  c.lineWidth=1;
+  c.moveTo(m.left,m.top+ph);
+  c.lineTo(width-m.right,m.top+ph);
+  c.stroke();
+
+  // نمایش مقدار شروع محور
   c.font='8px Arial';
+  c.textAlign='left';
+  c.textBaseline='top';
+  c.fillStyle='#26374d';
+  c.fillText('0.002',m.left,m.top+ph+8);
+
+  // لیبل‌های الک در یک ردیف
+  c.font='7px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
   c.fillStyle='#26374d';
 
-  ticks.forEach(s=>{
+  ascending.forEach(s=>{
+    if(s>terminalSieve)return;
+
     const xx=x(s);
     const label=sieveLabels[String(s)]||String(s);
 
     c.fillText(label,xx,m.top-22);
 
-    // خط کوچک اتصال لیبل به محل دقیق الک
     c.beginPath();
-    c.setLineDash([]);
     c.strokeStyle='#64748b';
-    c.lineWidth=.65;
-    c.moveTo(xx,m.top-14);
-    c.lineTo(xx,m.top-2);
+    c.lineWidth=.6;
+    c.moveTo(xx,m.top-15);
+    c.lineTo(xx,m.top-3);
     c.stroke();
   });
+
+  // لیبل الک بعدی در انتهای محور
+  if(nextSieve>terminalSieve){
+    const endX=plotRight;
+    c.fillText(sieveLabels[String(nextSieve)]||String(nextSieve),endX,m.top-22);
+  }
 
   // کادر محدوده رسم
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.setLineDash([]);
-  c.strokeRect(m.left,m.top,pw,ph);
+  c.strokeRect(m.left,m.top,width-m.left-m.right,ph);
 
   function line(points,color,dash,lw){
     if(points.length<2)return;
 
     c.save();
     c.beginPath();
-    c.rect(m.left,m.top,pw,ph);
+    c.rect(m.left,m.top,width-m.left-m.right,ph);
     c.clip();
 
     c.beginPath();
@@ -581,19 +613,23 @@ function drawChart(){
   }
 
   const range=ranges[$('spClass').value]||{};
-  const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
+  const keys=Object.keys(range)
+    .map(Number)
+    .filter(k=>k<=terminalSieve)
+    .sort((a,b)=>a-b);
 
   // حدود استاندارد
-  line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
-  line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
+  line(keys.map(k=>[k,range[String(k)][0]]),'#111',[],1.4);
+  line(keys.map(k=>[k,range[String(k)][1]]),'#111',[],1.4);
 
   // منحنی نمونه
   if(lastResult){
-    const sample=ticks
+    const sample=ascending
+      .filter(s=>s<=terminalSieve)
       .map(s=>[s,lastResult.passing[String(s)]])
       .filter(([s,p])=>Number.isFinite(p));
 
-    line(sample,'#dc0000',[5,4],1.7);
+    line(sample,'#dc0000',[5,4],1.8);
 
     c.fillStyle='#dc0000';
 
@@ -606,14 +642,14 @@ function drawChart(){
 
   // عناوین محورها
   c.fillStyle='#243c5b';
-  c.font='bold 12px Tahoma,Arial';
+  c.font='bold 11px Tahoma,Arial';
   c.textAlign='center';
   c.textBaseline='middle';
 
-  c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
+  c.fillText('اندازه سنگدانه (mm)',m.left+(width-m.left-m.right)/2,height-17);
 
   c.save();
-  c.translate(18,m.top+ph/2);
+  c.translate(14,m.top+ph/2);
   c.rotate(-Math.PI/2);
   c.fillText('درصد عبوری',0,0);
   c.restore();
@@ -725,7 +761,6 @@ async function exportPDF(){
   report.dir='rtl';
   report.lang='fa';
 
-  // گزارش در محدوده قابل‌مشاهده قرار می‌گیرد؛ خارج از صفحه یا پشت صفحه نیست.
   report.style.cssText=[
     'position:fixed',
     'left:0',
@@ -809,12 +844,12 @@ async function exportPDF(){
   report.appendChild(summary);
 
   const chartTitle=document.createElement('h3');
-  chartTitle.textContent='نمودار نیمه‌لگاریتمی دانه‌بندی';
+  chartTitle.textContent='منحنی دانه بندی';
   chartTitle.style.cssText='text-align:center;margin:18px 0 8px';
   report.appendChild(chartTitle);
 
   const chartImage=document.createElement('img');
-  chartImage.alt='نمودار دانه‌بندی';
+  chartImage.alt='منحنی دانه بندی';
   chartImage.src=$('gradingChart').toDataURL('image/png');
   chartImage.style.cssText='display:block;width:100%;height:auto;background:#fff;';
   report.appendChild(chartImage);
@@ -831,7 +866,6 @@ async function exportPDF(){
   document.body.appendChild(report);
 
   try{
-    // صبر برای رندر کامل گزارش و تصویر نمودار
     await waitForPaint();
 
     if(chartImage.decode){
@@ -866,7 +900,6 @@ async function exportPDF(){
       throw new Error('فایل PDF تولیدشده خالی یا ناقص است.');
     }
 
-    // تبدیل PDF به Base64 برای ذخیره مستقیم با Capacitor
     const base64=await new Promise((resolve,reject)=>{
       const reader=new FileReader();
 
@@ -902,7 +935,6 @@ async function exportPDF(){
       throw new Error('ذخیره فایل PDF در حافظه دستگاه ناموفق بود.');
     }
 
-    // بازکردن فایل ذخیره‌شده با PDFخوان اندروید
     await window.NativePDF.FileOpener.open({
       filePath:saved.uri,
       contentType:'application/pdf',
