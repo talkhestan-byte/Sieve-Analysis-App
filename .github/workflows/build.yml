@@ -47,6 +47,7 @@ jobs:
 
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
 
+          test -f native-pdf.js
           npx esbuild native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
 
       - name: Configure Capacitor
@@ -97,65 +98,6 @@ jobs:
           test -s android/app/release-key.jks
 
       - name: Configure release signing
-        run: |
-          set -eu
-
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("android/app/build.gradle")
-
-          if not path.is_file():
-              raise SystemExit("android/app/build.gradle not found")
-
-          content = path.read_text()
-
-          if "signingConfigs {" in content:
-              raise SystemExit("Signing configuration already exists; refusing to duplicate it.")
-
-          marker = "buildTypes {"
-          pos = content.find(marker)
-
-          if pos < 0:
-              raise SystemExit("buildTypes block not found")
-
-          signing_block = '''
-              signingConfigs {
-                  release {
-                      storeFile file("release-key.jks")
-                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
-                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
-                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
-                  }
-              }
-          '''
-
-          content = content[:pos] + signing_block + content[pos:]
-
-          pos = content.find(marker)
-          release_pos = content.find("release {", pos)
-
-          if release_pos < 0:
-              raise SystemExit("release build type not found")
-
-          brace = content.find("{", release_pos)
-          line_end = content.find("\\n", brace)
-
-          if line_end < 0:
-              raise SystemExit("Could not locate release block")
-
-          content = (
-              content[:line_end + 1]
-              + "            signingConfig signingConfigs.release\\n"
-              + content[line_end + 1:]
-          )
-
-          path.write_text(content)
-
-          print("Release signing configured.")
-          PY
-
-      - name: Build signed release AAB
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -167,7 +109,40 @@ jobs:
           test -n "$SIGNING_KEY_ALIAS"
           test -n "$SIGNING_KEY_PASSWORD"
 
+          cat > android/app/signing.gradle <<'EOF'
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("release-key.jks")
+                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+                  }
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+
+          echo "" >> android/app/build.gradle
+          echo "apply from: 'signing.gradle'" >> android/app/build.gradle
+
+          echo "Release signing configuration created."
+
+      - name: Build signed release AAB
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -eu
+
           cd android
+
           ./gradlew bundleRelease
 
           test -s app/build/outputs/bundle/release/app-release.aab
