@@ -1,4 +1,3 @@
-
 name: Build Sieve Analysis for Cafe Bazaar
 
 'on':
@@ -30,19 +29,38 @@ jobs:
       - name: Prepare web app
         run: |
           set -eu
+
           mkdir -p www
           cp index.html www/index.html
+
           npm init -y
+
           npm install @capacitor/core@6 @capacitor/android@6
-          npm install --save-dev @capacitor/cli@6 typescript
+          npm install --save-dev @capacitor/cli@6 typescript esbuild
+
+          npm install @capacitor/filesystem@6
+          npm install @capacitor-community/file-opener@6.0.1
+
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
+
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
+
+          npx esbuild native-pdf.js \
+            --bundle \
+            --format=esm \
+            --outfile=www/native-pdf.bundle.js
+
+          test -s www/index.html
+          test -s www/html2pdf.bundle.min.js
+          test -s www/native-pdf.bundle.js
 
       - name: Configure Capacitor
         run: |
           set -eu
+
           rm -f capacitor.config.ts capacitor.config.json
+
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.yourname.sieveanalysis",
@@ -50,18 +68,23 @@ jobs:
             "webDir": "www"
           }
           EOF
+
           npx cap add android
           npx cap sync android
 
       - name: Build Debug APK
         run: |
           set -eu
+
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+
           test -s app/build/outputs/apk/debug/app-debug.apk
+
           cd ..
           mkdir -p output
+
           cp android/app/build/outputs/apk/debug/app-debug.apk \
              output/Sieve-Analysis-debug.apk
 
@@ -70,21 +93,26 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
         run: |
           set -eu
+
           test -n "$KEYSTORE_BASE64" || {
             echo "Missing SIGNING_KEYSTORE_BASE64 secret"
             exit 1
           }
+
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
             > android/app/release-key.jks
+
           test -s android/app/release-key.jks
 
       - name: Configure release signing
         run: |
           set -eu
+
           python3 - <<'PY'
           from pathlib import Path
 
           path = Path("android/app/build.gradle")
+
           if not path.is_file():
               raise SystemExit("android/app/build.gradle not found")
 
@@ -113,6 +141,7 @@ jobs:
           '''
 
           content = content[:pos] + signing_block + content[pos:]
+
           pos = content.find(marker)
           release_pos = content.find("release {", pos)
 
@@ -142,13 +171,16 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           set -eu
+
           test -n "$SIGNING_STORE_PASSWORD"
           test -n "$SIGNING_KEY_ALIAS"
           test -n "$SIGNING_KEY_PASSWORD"
 
           cd android
           ./gradlew bundleRelease
+
           test -s app/build/outputs/bundle/release/app-release.aab
+
           cd ..
 
           cp android/app/build/outputs/bundle/release/app-release.aab \
@@ -157,9 +189,11 @@ jobs:
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
           set -eu
+
           curl --fail --location --silent --show-error \
             https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
             --output bundlesigner.jar
+
           test -s bundlesigner.jar
 
       - name: Generate Cafe Bazaar BIN
@@ -169,6 +203,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
           set -eu
+
           java -jar bundlesigner.jar genbin \
             --verbose \
             --bundle android/app/build/outputs/bundle/release/app-release.aab \
