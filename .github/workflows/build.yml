@@ -34,6 +34,8 @@ jobs:
           mkdir -p www
           cp index.html www/index.html
 
+          test -f native-pdf.js
+
           npm init -y
 
           npm install @capacitor/core@6 @capacitor/android@6
@@ -47,8 +49,14 @@ jobs:
 
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/
 
-          test -f native-pdf.js
-          npx esbuild native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
+          npx esbuild native-pdf.js \
+            --bundle \
+            --format=esm \
+            --outfile=www/native-pdf.bundle.js
+
+          test -s www/index.html
+          test -s www/html2pdf.bundle.min.js
+          test -s www/native-pdf.bundle.js
 
       - name: Configure Capacitor
         run: |
@@ -80,7 +88,8 @@ jobs:
           cd ..
           mkdir -p output
 
-          cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+            output/Sieve-Analysis-debug.apk
 
       - name: Restore persistent signing key
         env:
@@ -93,7 +102,8 @@ jobs:
             exit 1
           }
 
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > android/app/release-key.jks
 
           test -s android/app/release-key.jks
 
@@ -128,8 +138,10 @@ jobs:
           }
           EOF
 
-          echo "" >> android/app/build.gradle
-          echo "apply from: 'signing.gradle'" >> android/app/build.gradle
+          if ! grep -q "signing.gradle" android/app/build.gradle; then
+            echo "" >> android/app/build.gradle
+            echo "apply from: 'signing.gradle'" >> android/app/build.gradle
+          fi
 
           echo "Release signing configuration created."
 
@@ -149,7 +161,8 @@ jobs:
 
           cd ..
 
-          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
+          cp android/app/build/outputs/bundle/release/app-release.aab \
+            output/Sieve-Analysis.aab
 
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
