@@ -86,7 +86,7 @@ button:hover{filter:brightness(1.09)}
 /* نمودار */
 .chart-card{overflow:hidden}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
-.chart-wrap canvas{display:block;height:350px;width:100%;max-width:100%}
+.chart-wrap canvas{height:350px;width:100%;display:block}
 
 @media(max-width:420px){
  .app-title span{font-size:16px}
@@ -431,7 +431,11 @@ function calculate(){
   drawChart();
 }
 
-/* نمودار نیمه‌لگاریتمی اصلاح‌شده */
+/* نمودار نیمه‌لگاریتمی:
+   محور از یک الک کوچک‌تر از کوچک‌ترین الک محدوده رده
+   تا یک الک بزرگ‌تر از بزرگ‌ترین الک محدوده رده رسم می‌شود.
+   اگر محدوده‌ای برای رده انتخاب‌شده وجود نداشته باشد،
+   کل دامنه الک‌ها رسم خواهد شد. */
 function drawChart(){
   const canvas=$('gradingChart');
   if(!canvas)return;
@@ -454,93 +458,65 @@ function drawChart(){
   c.fillStyle='#fff';
   c.fillRect(0,0,width,height);
 
-  const m={left:43,right:8,top:65,bottom:49};
+  const m={left:43,right:12,top:65,bottom:49};
   const ph=height-m.top-m.bottom;
+
+  /* اندازه الک‌ها از کوچک به بزرگ */
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
 
-  /* شروع عادی محور */
-  let axisMin=0.002;
-  let similarStartSieve=null;
+  /* محدوده رده انتخاب‌شده */
+  const selectedRange=ranges[$('spClass').value]||{};
 
-  /* شرط سه درصد عبوری مشابه در انتهای ریزدانه */
-  const SIMILAR_PASSING_TOLERANCE=0.1;
+  const rangeSizes=Object.keys(selectedRange)
+    .map(Number)
+    .filter(v=>Number.isFinite(v)&&v>0)
+    .sort((a,b)=>a-b);
 
-  if(lastResult&&lastResult.passing){
-    for(let i=0;i<=ascending.length-3;i++){
-      const s1=ascending[i];
-      const s2=ascending[i+1];
-      const s3=ascending[i+2];
-
-      const p1=Number(lastResult.passing[String(s1)]);
-      const p2=Number(lastResult.passing[String(s2)]);
-      const p3=Number(lastResult.passing[String(s3)]);
-
-      if(
-        Number.isFinite(p1)&&
-        Number.isFinite(p2)&&
-        Number.isFinite(p3)
-      ){
-        const difference=Math.max(p1,p2,p3)-Math.min(p1,p2,p3);
-
-        if(difference<=SIMILAR_PASSING_TOLERANCE){
-          similarStartSieve=s3;
-          axisMin=s3;
-          break;
-        }
-      }
-    }
-  }
-
-  /* پیدا کردن کوچک‌ترین الک دارای عبوری 100 درصد */
-  let firstFullIndex=-1;
-
-  if(lastResult&&lastResult.passing){
-    firstFullIndex=ascending.findIndex(s=>{
-      const value=Number(lastResult.passing[String(s)]);
-      return Number.isFinite(value)&&value>=99.999;
-    });
-  }
-
-  /*
-    انتهای محور: یک الک بزرگ‌تر از اولین الک 100 درصدی.
-    اگر چنین الکی در داده‌ها نباشد، آخرین الک استفاده می‌شود.
-  */
+  let axisMin;
   let axisMax;
 
-  if(firstFullIndex>=0){
-    axisMax=ascending[Math.min(firstFullIndex+1,ascending.length-1)];
+  if(rangeSizes.length>0){
+    /* کوچک‌ترین الک محدوده و یک الک کوچک‌تر از آن */
+    const minRangeSize=rangeSizes[0];
+    const minIndex=ascending.indexOf(minRangeSize);
+
+    axisMin=minIndex>0
+      ?ascending[minIndex-1]
+      :ascending[0];
+
+    /* بزرگ‌ترین الک محدوده و یک الک بزرگ‌تر از آن */
+    const maxRangeSize=rangeSizes[rangeSizes.length-1];
+    const maxIndex=ascending.indexOf(maxRangeSize);
+
+    axisMax=maxIndex>=0&&maxIndex<ascending.length-1
+      ?ascending[maxIndex+1]
+      :ascending[ascending.length-1];
+
   }else{
+    /* اگر محدوده استاندارد موجود نباشد، کل دانه‌بندی */
+    axisMin=ascending[0];
     axisMax=ascending[ascending.length-1];
   }
 
-  /*
-    کنترل محدوده برای جلوگیری از محور نامعتبر:
-    در صورت تداخل شروع و پایان، محور به محدوده کامل برمی‌گردد.
-  */
-  if(!Number.isFinite(axisMin)||axisMin<=0)axisMin=0.002;
+  /* اطمینان از معتبر بودن محدوده محور */
+  if(!Number.isFinite(axisMin)||axisMin<=0)axisMin=ascending[0];
+  if(!Number.isFinite(axisMax)||axisMax<=axisMin)axisMax=ascending[ascending.length-1];
 
-  if(!Number.isFinite(axisMax)||axisMax<=axisMin){
-    axisMin=0.002;
-    axisMax=ascending[ascending.length-1];
-  }
-
-  if(axisMax<=axisMin)axisMax=axisMin*10;
-
-  /* فاصله دو طرف برای لیبل‌ها */
-  const labelGap=Math.max(24,Math.min(34,width*.075));
-  const plotLeft=m.left+labelGap;
-  const plotRight=width-m.right-labelGap;
-  const plotWidth=Math.max(40,plotRight-plotLeft);
+  const plotLeft=m.left;
+  const plotRight=width-m.right;
+  const plotWidth=plotRight-plotLeft;
 
   const logLow=Math.log10(axisMin);
   const logHigh=Math.log10(axisMax);
   const logSpan=logHigh-logLow;
 
-  /* تبدیل اندازه الک به مختصات واقعی نیمه‌لگاریتمی */
+  /* تبدیل لگاریتمی اندازه الک به مختصات افقی */
   const x=value=>{
     const v=Number(value);
     if(!Number.isFinite(v)||v<=0)return NaN;
-    return plotLeft+(Math.log10(v)-logLow)/logSpan*plotWidth;
+
+    return plotLeft+
+      (Math.log10(v)-logLow)/logSpan*plotWidth;
   };
 
   const y=value=>m.top+(100-value)/100*ph;
@@ -568,7 +544,7 @@ function drawChart(){
     }
   }
 
-  /* خطوط عمودی الک‌ها */
+  /* خطوط عمودی اندازه الک‌ها */
   c.save();
   c.beginPath();
   c.rect(plotLeft,m.top,plotWidth,ph);
@@ -592,24 +568,12 @@ function drawChart(){
   c.restore();
   c.setLineDash([]);
 
-  /* کادر محور */
+  /* کادر محدوده نمودار */
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.strokeRect(plotLeft,m.top,plotWidth,ph);
 
-  /* برچسب شروع محور */
-  c.font='8px Arial';
-  c.textAlign='left';
-  c.textBaseline='top';
-  c.fillStyle='#26374d';
-
-  c.fillText(
-    similarStartSieve!==null?String(similarStartSieve):'0.002',
-    plotLeft,
-    m.top+ph+8
-  );
-
-  /* لیبل‌های نمره الک در یک ردیف و در مختصات واقعی */
+  /* لیبل‌های نمره الک در یک ردیف و در محل واقعی خودشان */
   c.font='7px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
@@ -633,7 +597,7 @@ function drawChart(){
     c.stroke();
   });
 
-  /* رسم منحنی‌ها با محدودسازی صحیح محدوده رسم */
+  /* رسم خطوط با محدودیت محور */
   function line(points,color,dash,lw){
     const validPoints=points.filter(([sx,sy])=>
       Number.isFinite(sx)&&
@@ -680,25 +644,33 @@ function drawChart(){
     c.setLineDash([]);
   }
 
-  /* حدود استاندارد */
-  const range=ranges[$('spClass').value]||{};
-
-  const keys=Object.keys(range)
+  /* خطوط حدود استاندارد رده انتخاب‌شده */
+  const standardKeys=Object.keys(selectedRange)
     .map(Number)
     .filter(k=>k>=axisMin&&k<=axisMax)
     .sort((a,b)=>a-b);
 
-  const lowerPoints=keys.map(k=>[k,range[String(k)][0]]);
-  const upperPoints=keys.map(k=>[k,range[String(k)][1]]);
+  const lowerPoints=standardKeys.map(k=>[
+    k,
+    selectedRange[String(k)][0]
+  ]);
+
+  const upperPoints=standardKeys.map(k=>[
+    k,
+    selectedRange[String(k)][1]
+  ]);
 
   line(lowerPoints,'#111',[],1.4);
   line(upperPoints,'#111',[],1.4);
 
-  /* منحنی نمونه؛ نقاط معتبر در محدوده محور نگه داشته می‌شوند */
+  /* منحنی دانه‌بندی نمونه */
   if(lastResult&&lastResult.passing){
     const sample=ascending
       .filter(s=>s>=axisMin&&s<=axisMax)
-      .map(s=>[s,Number(lastResult.passing[String(s)])])
+      .map(s=>[
+        s,
+        Number(lastResult.passing[String(s)])
+      ])
       .filter(([s,p])=>
         Number.isFinite(p)&&
         p>=0&&
@@ -707,6 +679,7 @@ function drawChart(){
 
     line(sample,'#dc0000',[5,4],2);
 
+    /* نمایش نقاط اندازه‌گیری‌شده */
     c.save();
     c.beginPath();
     c.rect(plotLeft,m.top,plotWidth,ph);
