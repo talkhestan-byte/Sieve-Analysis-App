@@ -4,86 +4,347 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>تحلیل دانه‌بندی سنگدانه - ۴۹۷۷</title>
+
 <style>
-:root{--primary:#0067c0;--bg:#f4f7fb;--border:#cbd5e1;--success:#059669;--danger:#dc2626}
+:root{
+  --primary:#0067c0;
+  --bg:#f4f7fb;
+  --border:#cbd5e1;
+  --success:#059669;
+  --danger:#dc2626;
+}
 *{box-sizing:border-box}
-body{font:13px Tahoma,Arial,sans-serif;margin:0;padding:12px;color:#1e293b;background:radial-gradient(circle at 12% 10%,#9ee7ff 0,transparent 35%),radial-gradient(circle at 85% 25%,#c8b5ff 0,transparent 38%),linear-gradient(145deg,#e4f5ff,#e6e9ff 55%,#dcf9f4);min-height:100vh}
-.card{background:linear-gradient(145deg,rgba(255,255,255,.91),rgba(235,246,255,.78));border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 30px #254b832b,inset 0 1px 0 #fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:16px;padding:14px;margin:0 auto 14px;max-width:1000px}
-h2{text-align:center;color:#124a9c;font-size:17px;margin:2px 0 16px;text-shadow:0 1px 0 #fff;border-bottom:1px solid #b9d6f4;padding-bottom:12px}
+body{
+  font:13px Tahoma,Arial,sans-serif;
+  background:
+    radial-gradient(circle at 12% 10%,#9ee7ff 0,transparent 35%),
+    radial-gradient(circle at 85% 25%,#c8b5ff 0,transparent 38%),
+    linear-gradient(145deg,#e4f5ff,#e6e9ff 55%,#dcf9f4);
+  min-height:100vh;
+  margin:0;
+  padding:12px;
+  color:#1e293b;
+}
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(235,246,255,.84));
+  border:1px solid rgba(255,255,255,.95);
+  box-shadow:0 10px 30px #254b832b,inset 0 1px 0 #fff;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-radius:16px;
+  padding:14px;
+  margin:0 auto 14px;
+  max-width:1000px;
+}
+h2{
+  text-align:center;
+  color:#124a9c;
+  font-size:17px;
+  margin:2px 0 16px;
+}
 .app-title{line-height:1.75;margin-bottom:14px!important}
-.app-title span{display:block;font-size:18px;font-weight:800;color:#153f70}
-.app-title small{display:block;font-size:12px;font-weight:600;color:#536b86}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:6px 8px;margin-bottom:7px}
-.field{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.app-title span{
+  display:block;
+  font-size:18px;
+  font-weight:800;
+  color:#153f70;
+}
+.app-title small{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  color:#536b86;
+}
+.row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(245px,1fr));
+  gap:6px 8px;
+  margin-bottom:7px;
+}
+.field{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
 .field label{font-size:12px;font-weight:bold;flex:1}
-.field input,.field select{font:12px Tahoma,Arial,sans-serif;border:1px solid #b7cce4;border-radius:6px;padding:6px 5px;min-width:0;width:145px;max-width:55%;background:linear-gradient(#fff,#f2f8ff);text-align:center;box-shadow:inset 0 1px 3px #204b7616,0 1px 0 white}
-.field input.numeric{width:8ch;max-width:8ch;direction:ltr;font-family:Arial,sans-serif;font-size:14px}
-.field input:focus,.field select:focus{outline:2px solid var(--primary)}
-.table-container{overflow-x:auto;border:1px solid #b8d2ee;border-radius:9px;background:#fff}
-table{border-collapse:collapse;width:100%;min-width:600px;font-size:11px}
-th,td{border:1px solid #e2e8f0;padding:7px 3px;text-align:center}
-th{background:linear-gradient(#edf7ff,#d8eafb);color:#18447a}
-.table-container table{width:max-content;min-width:100%;table-layout:fixed;font-size:9px}
-.table-container th,.table-container td{padding:4px 1px;min-width:0;white-space:nowrap}
-.table-container th:first-child,.table-container td:first-child{position:sticky;right:0;z-index:2;background:#fff;width:45px;min-width:45px;max-width:45px;box-shadow:-2px 0 3px #0002}
-.table-container thead th:first-child{z-index:3;background:#edf7ff}
-.table-container th:nth-child(2),.table-container td:nth-child(2){width:64px;min-width:64px}
-.table-container th:nth-child(3),.table-container td:nth-child(3),.table-container th:nth-child(4),.table-container td:nth-child(4),.table-container th:nth-child(5),.table-container td:nth-child(5){width:48px;min-width:48px}
-.table-container th:nth-child(6),.table-container td:nth-child(6){width:66px;min-width:66px}
-.table-container th:nth-child(7),.table-container td:nth-child(7){width:57px;min-width:57px}
+.field input,.field select{
+  font:12px Tahoma,Arial,sans-serif;
+  border:1px solid #b7cce4;
+  border-radius:6px;
+  padding:6px 5px;
+  min-width:0;
+  width:145px;
+  max-width:55%;
+  background:linear-gradient(#fff,#f2f8ff);
+  text-align:center;
+  box-shadow:inset 0 1px 3px #204b7616,0 1px 0 white;
+}
+.field input.numeric{
+  width:8ch;
+  max-width:8ch;
+  direction:ltr;
+  font-family:Arial,sans-serif;
+  font-size:14px;
+}
+.field input:focus,.field select:focus{
+  outline:2px solid var(--primary);
+}
+.table-container{
+  overflow-x:auto;
+  border:1px solid #b8d2ee;
+  border-radius:9px;
+  background:#fff;
+}
+table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:600px;
+  font-size:11px;
+}
+.table-container table{
+  width:max-content;
+  min-width:100%;
+  table-layout:fixed;
+  font-size:9px;
+}
+th,td{
+  border:1px solid #e2e8f0;
+  padding:4px 1px;
+  text-align:center;
+  white-space:nowrap;
+}
+th{
+  background:linear-gradient(#edf7ff,#d8eafb);
+  color:#18447a;
+}
+.table-container th:first-child,
+.table-container td:first-child{
+  position:sticky;
+  right:0;
+  z-index:2;
+  background:#fff;
+  width:45px;
+  min-width:45px;
+  max-width:45px;
+  box-shadow:-2px 0 3px #0002;
+}
+.table-container thead th:first-child{
+  z-index:3;
+  background:#d8eafb;
+}
+.table-container th:nth-child(2),
+.table-container td:nth-child(2){width:64px;min-width:64px}
+.table-container th:nth-child(3),
+.table-container td:nth-child(3),
+.table-container th:nth-child(4),
+.table-container td:nth-child(4),
+.table-container th:nth-child(5),
+.table-container td:nth-child(5){
+  width:48px;
+  min-width:48px;
+}
+.table-container th:nth-child(6),
+.table-container td:nth-child(6){width:66px;min-width:66px}
+.table-container th:nth-child(7),
+.table-container td:nth-child(7){width:57px;min-width:57px}
+.table-container td input.numeric{
+  width:5.7ch;
+  max-width:100%;
+  padding:3px 0;
+  font-size:10px;
+  text-align:center;
+  direction:ltr;
+  border:1px solid var(--border);
+  border-radius:4px;
+  font-family:Arial,sans-serif;
+}
 .table-container tbody tr:nth-child(even) td{background:#f4f9ff}
 .table-container tbody tr:nth-child(even) td:first-child{background:#edf5ff}
-.table-container td input.numeric{width:5.7ch;max-width:100%;padding:3px 0;font-size:10px;text-align:center;direction:ltr;border:1px solid var(--border);border-radius:4px;font-family:Arial,sans-serif}
-.results-box{display:flex;gap:10px;justify-content:space-around;flex-wrap:wrap;background:linear-gradient(120deg,#d7f4ff,#e3e5ff);border:1px solid #fff;box-shadow:inset 0 1px 4px #3268a51b;padding:12px;border-radius:8px;margin-top:12px;font-weight:bold;color:#0369a1}
-.warning-box{color:var(--danger);font-size:12px;margin-top:10px;line-height:1.9}
-.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-button{flex:1;min-width:95px;padding:12px 6px;border:1px solid #ffffff99;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer;box-shadow:inset 0 2px 1px #ffffff70,inset 0 -3px 4px #00000016,0 4px 9px #17385d36;text-shadow:0 1px 1px #0004;transition:filter .15s,transform .15s}
+
+.results-box{
+  display:flex;
+  gap:10px;
+  justify-content:space-around;
+  flex-wrap:wrap;
+  background:linear-gradient(120deg,#d7f4ff,#e3e5ff);
+  border:1px solid #fff;
+  box-shadow:inset 0 1px 4px #3268a51b;
+  padding:12px;
+  border-radius:8px;
+  margin-top:12px;
+  font-weight:bold;
+  color:#0369a1;
+}
+.warning-box{
+  color:var(--danger);
+  font-size:12px;
+  margin-top:10px;
+  line-height:1.9;
+}
+.buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:9px;
+}
+button{
+  flex:1;
+  min-width:95px;
+  padding:12px 6px;
+  border:1px solid #ffffff99;
+  border-radius:8px;
+  color:white;
+  font:bold 13px Tahoma;
+  cursor:pointer;
+  box-shadow:
+    inset 0 2px 1px #ffffff70,
+    inset 0 -3px 4px #00000016,
+    0 4px 9px #17385d36;
+  text-shadow:0 1px 1px #0004;
+  transition:filter .15s,transform .15s;
+}
 button:active{transform:translateY(1px)}
 button:hover{filter:brightness(1.09)}
 .btn-calc{background:linear-gradient(#46d7a0,#05865c)}
 .btn-pdf{background:linear-gradient(#66b9ff,#0766c6)}
+.btn-reset{background:linear-gradient(#a8b7d0,#53647f)}
 .ok{color:var(--success);font-weight:bold}
 .not-ok{color:var(--danger);font-weight:bold}
-.action-bar{display:flex;align-items:center;gap:10px;margin-top:12px}
-.action-bar button{flex:1;min-width:0}
-.chart-card{overflow:hidden}
-.chart-wrap{width:100%;overflow-x:auto;overflow-y:hidden;direction:ltr;border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
-canvas{display:block;width:100%;height:330px}
-.legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px;margin-top:6px}
-.legend span{color:#41566f;font-weight:600}
-.legend span:before{content:'';display:inline-block;width:28px;vertical-align:middle;margin-left:5px;border-top:2px solid #25364b}
-.legend .sample:before{border-top:2px dashed #d12e3d}
-.usage-results{margin-top:13px;display:grid;gap:7px}
-.usage-results:empty{display:none}
-.usage-message{padding:10px 12px;border-radius:9px;font-size:12px;font-weight:bold;line-height:1.9;border:1px solid;box-shadow:inset 0 1px 0 #fff,0 2px 6px #0000000a}
-.usage-message.allow{color:#086b42;border-color:#9edcbd;background:linear-gradient(#f0fff6,#d8f7e6)}
-.usage-message.deny{color:#a11c2b;border-color:#f0a7ad;background:linear-gradient(#fff3f3,#ffdddd)}
-.usage-message.caution{color:#855008;border-color:#f0d29a;background:linear-gradient(#fffbee,#fff0cc)}
-.usage-message.caution:first-child{font-size:14px;border-width:2px;text-align:center}
-.note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}
-@media(max-width:420px){
- body{padding:7px}
- .card{padding:10px}
- .row{grid-template-columns:1fr}
- .field input,.field select{width:150px}
- .app-title span{font-size:16px}
- .app-title small{font-size:11px}
- .chart-wrap{padding:2px}
- canvas{height:320px}
+
+.usage-results{
+  margin-top:13px;
+  display:grid;
+  gap:7px;
 }
+.usage-results:empty{display:none}
+.usage-message{
+  padding:10px 12px;
+  border-radius:9px;
+  font-size:12px;
+  font-weight:bold;
+  line-height:1.9;
+  border:1px solid;
+  box-shadow:inset 0 1px 0 #fff,0 2px 6px #0000000a;
+}
+.usage-message.allow{
+  color:#086b42;
+  border-color:#9edcbd;
+  background:linear-gradient(#f0fff6,#d8f7e6);
+}
+.usage-message.deny{
+  color:#a11c2b;
+  border-color:#f0a7ad;
+  background:linear-gradient(#fff3f3,#ffdddd);
+}
+.usage-message.caution{
+  color:#855008;
+  border-color:#f0d29a;
+  background:linear-gradient(#fffbee,#fff0cc);
+}
+.usage-message.caution:first-child{
+  font-size:14px;
+  border-width:2px;
+  text-align:center;
+}
+
+/* نمودار */
+.chart-card{overflow:hidden}
+.chart-wrap{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  direction:ltr;
+  border:1px solid #d6e3f1;
+  border-radius:12px;
+  background:linear-gradient(180deg,#fff,#fbfdff);
+  padding:4px;
+  box-shadow:inset 0 1px 3px #153f7010;
+  -webkit-overflow-scrolling:touch;
+}
+canvas{
+  display:block;
+  height:350px;
+}
+.legend{
+  display:flex;
+  gap:18px;
+  justify-content:center;
+  flex-wrap:wrap;
+  font-size:11px;
+  margin-top:6px;
+}
+.legend span{
+  color:#41566f;
+  font-weight:600;
+}
+.legend span:before{
+  content:'';
+  display:inline-block;
+  width:28px;
+  vertical-align:middle;
+  margin-left:5px;
+  border-top:2px solid #25364b;
+}
+.legend .sample:before{border-top:2px dashed #d12e3d}
+
+.action-bar{
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+  margin-top:12px;
+}
+.action-bar button{
+  flex:1;
+  min-width:0;
+  min-height:44px;
+}
+
+.note{
+  color:#64748b;
+  font-size:11px;
+  text-align:center;
+  line-height:1.7;
+}
+
+@media(max-width:420px){
+  body{padding:7px}
+  .card{padding:10px}
+  .row{grid-template-columns:1fr}
+  .field input,.field select{width:150px}
+  .app-title span{font-size:16px}
+  .app-title small{font-size:11px}
+  .chart-wrap{padding:2px}
+}
+
 @media print{
- @page{size:A4 landscape;margin:10mm}
- body{background:#fff!important;padding:0!important;color:#111}
- .card{max-width:none;margin:0 0 8mm;padding:8px;border:1px solid #ccc;box-shadow:none;backdrop-filter:none;background:#fff!important;break-inside:avoid}
- .buttons,.action-bar{display:none!important}
- .chart-wrap{overflow:visible}
- canvas{max-width:100%!important;height:280px!important}
- .table-container{overflow:visible}
- .table-container table{width:100%;min-width:0}
- .table-container th:first-child,.table-container td:first-child{position:static;box-shadow:none}
+  @page{size:A4 landscape;margin:10mm}
+  body{background:#fff!important;padding:0!important;color:#111}
+  .card{
+    max-width:none;
+    margin:0 0 8mm;
+    padding:8px;
+    border:1px solid #ccc;
+    box-shadow:none;
+    backdrop-filter:none;
+    background:#fff!important;
+    break-inside:avoid;
+  }
+  .buttons,.action-bar{display:none!important}
+  .chart-wrap{overflow:visible}
+  canvas{max-width:100%!important;height:280px!important}
+  .table-container{overflow:visible}
+  .table-container table{width:100%;min-width:0}
+  .table-container th:first-child,
+  .table-container td:first-child{
+    position:static;
+    box-shadow:none;
+  }
 }
 </style>
 </head>
+
 <body>
 
 <div class="card">
@@ -93,42 +354,81 @@ canvas{display:block;width:100%;height:330px}
   </h2>
 
   <div class="row">
-    <div class="field"><label for="company">نام شرکت</label><input id="company" placeholder="اختیاری"></div>
-    <div class="field"><label for="sampleId">شماره نمونه</label><input id="sampleId" placeholder="اختیاری"></div>
-    <div class="field"><label for="date">تاریخ</label><input id="date" placeholder="۱۴۰۵/۰۸/۰۹"></div>
+    <div class="field">
+      <label for="company">نام شرکت</label>
+      <input id="company" placeholder="اختیاری">
+    </div>
+    <div class="field">
+      <label for="sampleId">شماره نمونه</label>
+      <input id="sampleId" placeholder="اختیاری">
+    </div>
+    <div class="field">
+      <label for="date">تاریخ</label>
+      <input id="date" placeholder="۱۴۰۵/۰۸/۰۹">
+    </div>
   </div>
 
   <div class="row">
-    <div class="field"><label for="materialName">نام سنگدانه</label>
+    <div class="field">
+      <label for="materialName">نام سنگدانه</label>
       <select id="materialName">
-        <option>ماسه طبیعی</option><option>شن طبیعی</option>
-        <option>ماسه شکسته</option><option>شن شکسته</option>
+        <option>ماسه طبیعی</option>
+        <option>شن طبیعی</option>
+        <option>ماسه شکسته</option>
+        <option>شن شکسته</option>
         <option>مخلوط شن و ماسه</option>
       </select>
     </div>
-    <div class="field"><label for="materialCategory">نوع سنگدانه</label>
+
+    <div class="field">
+      <label for="materialCategory">نوع سنگدانه</label>
       <select id="materialCategory" onchange="toggleCategoryFields()">
-        <option>ریزدانه</option><option>درشت‌دانه</option>
+        <option>ریزدانه</option>
+        <option>درشت‌دانه</option>
       </select>
     </div>
-    <div class="field"><label for="spClass">کلاس دانه‌بندی</label><select id="spClass"></select></div>
+
+    <div class="field">
+      <label for="spClass">کلاس دانه‌بندی</label>
+      <select id="spClass"></select>
+    </div>
   </div>
 
   <div class="row">
-    <div class="field"><label for="totalWeight">وزن کل نمونه (گرم)</label><input id="totalWeight" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
-    <div class="field"><label for="afterWash">وزن بعد از شستشو (گرم)</label><input id="afterWash" class="numeric" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></div>
-    <div class="field" id="baseModulusField"><label for="baseModulus">مدول نرمی مبنا</label><input id="baseModulus" class="numeric" type="text" inputmode="decimal" maxlength="6" value="2.90"></div>
+    <div class="field">
+      <label for="totalWeight">وزن کل نمونه (گرم)</label>
+      <input id="totalWeight" class="numeric" type="text"
+             inputmode="decimal" maxlength="6" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="afterWash">وزن بعد از شستشو (گرم)</label>
+      <input id="afterWash" class="numeric" type="text"
+             inputmode="decimal" maxlength="6" autocomplete="off">
+    </div>
+
+    <div class="field" id="baseModulusField">
+      <label for="baseModulus">مدول نرمی مبنا</label>
+      <input id="baseModulus" class="numeric" type="text"
+             inputmode="decimal" maxlength="6" value="2.90">
+    </div>
   </div>
 </div>
 
 <div class="card">
   <h2>جدول الک‌ها</h2>
+
   <div class="table-container">
     <table>
       <thead>
         <tr>
-          <th>نمره الک</th><th>وزن مانده (gr)</th><th>مانده (%)</th>
-          <th>تجمعی (%)</th><th>عبوری (%)</th><th>محدوده مجاز</th><th>انطباق</th>
+          <th>نمره الک</th>
+          <th>وزن مانده (gr)</th>
+          <th>مانده (%)</th>
+          <th>تجمعی (%)</th>
+          <th>عبوری (%)</th>
+          <th>محدوده مجاز</th>
+          <th>انطباق</th>
         </tr>
       </thead>
       <tbody id="sieveBody"></tbody>
@@ -145,14 +445,17 @@ canvas{display:block;width:100%;height:330px}
 
   <div class="action-bar">
     <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="exportPDF()">ساخت و نمایش PDF</button>
+    <button class="btn-reset" onclick="resetAll()">بازنشانی اطلاعات</button>
+    <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
   </div>
 </div>
 
 <div class="card chart-card">
   <h2>نمودار نیمه‌لگاریتمی دانه‌بندی</h2>
   <div class="chart-wrap">
-    <canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas>
+    <canvas id="gradingChart"
+      role="img"
+      aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas>
   </div>
   <div class="legend">
     <span>حدود استاندارد</span>
@@ -166,12 +469,16 @@ canvas{display:block;width:100%;height:330px}
 <script>
 'use strict';
 
-const sieves=['100','90','75','63','50','37.5','25','19','12.5','9.5','4.75','2.36','1.18','0.6','0.3','0.15','0.075'];
+const sieves=[
+  '100','90','75','63','50','37.5','25','19',
+  '12.5','9.5','4.75','2.36','1.18','0.6','0.3','0.15','0.075'
+];
 
 const ranges={
 'ماسه رده1':{'0.075':[0,3],'0.15':[0,10],'0.3':[5,30],'0.6':[25,60],'1.18':[50,85],'2.36':[80,100],'4.75':[95,100],'9.5':[100,100]},
 'ماسه رده2':{'0.075':[0,3],'0.15':[2,10],'0.3':[5,30],'0.6':[20,50],'1.18':[35,80],'2.36':[60,100],'4.75':[85,100],'9.5':[100,100]},
 'ماسه رده3':{'0.075':[2,5],'0.15':[10,20],'0.3':[15,40],'0.6':[30,60],'1.18':[45,80],'2.36':[65,100],'4.75':[90,100],'9.5':[100,100]},
+
 'شن رده 9':{'0.6':[0,5],'1.18':[0,10],'2.36':[10,40],'4.75':[85,100],'9.5':[100,100]},
 'شن رده 89':{'0.6':[0,5],'1.18':[0,10],'2.36':[5,30],'4.75':[20,55],'9.5':[90,100],'12.5':[100,100]},
 'شن رده 8':{'1.18':[0,5],'2.36':[0,10],'4.75':[10,30],'9.5':[85,100],'12.5':[100,100]},
@@ -190,10 +497,10 @@ const ranges={
 };
 
 const sieveLabels={
-'0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30',
-'1.18':'#16','2.36':'#8','4.75':'#4','9.5':'3/8″',
-'12.5':'1/2″','19':'3/4″','25':'1″','37.5':'1½″',
-'50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'
+  '0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30',
+  '1.18':'#16','2.36':'#8','4.75':'#4','9.5':'3/8″',
+  '12.5':'1/2″','19':'3/4″','25':'1″','37.5':'1½″',
+  '50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'
 };
 
 const $=id=>document.getElementById(id);
@@ -203,7 +510,8 @@ function normalizeDigits(v){
   return String(v)
     .replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776))
     .replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632))
-    .replace(/٫/g,'.').replace(/٬/g,'');
+    .replace(/٫/g,'.')
+    .replace(/٬/g,'');
 }
 
 function cleanNumeric(v){
@@ -221,18 +529,24 @@ function number(id){
 function buildTable(){
   const body=$('sieveBody');
   body.innerHTML='';
+
   sieves.forEach(s=>{
-    let tr=document.createElement('tr');
-    tr.innerHTML=`<td><b>${sieveLabels[s]||s}</b></td>
-      <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
-      <td id="ret-${s}">-</td><td id="cum-${s}">-</td>
-      <td id="pas-${s}">-</td><td id="rng-${s}">-</td><td id="cmp-${s}">-</td>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><b>${sieveLabels[s]||s}</b></td>
+      <td><input class="numeric" id="w-${s}" type="text"
+          inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
+      <td id="ret-${s}">-</td>
+      <td id="cum-${s}">-</td>
+      <td id="pas-${s}">-</td>
+      <td id="rng-${s}">-</td>
+      <td id="cmp-${s}">-</td>`;
     body.appendChild(tr);
   });
 
   document.querySelectorAll('input.numeric').forEach(el=>{
     el.addEventListener('input',()=>{
-      let v=cleanNumeric(el.value);
+      const v=cleanNumeric(el.value);
       if(el.value!==v)el.value=v;
       invalidate();
     });
@@ -244,30 +558,42 @@ function invalidate(){
   ['tvFm','tvPassing200'].forEach(id=>$(id).textContent='-');
   $('warnBox').textContent='';
   $('usageResults').innerHTML='';
+
   sieves.forEach(s=>{
-    ['ret','cum','pas','cmp'].forEach(p=>$(p+'-'+s).textContent='-');
+    ['ret','cum','pas','cmp'].forEach(p=>{
+      $(p+'-'+s).textContent='-';
+    });
     $('cmp-'+s).className='';
   });
+
   drawChart();
 }
 
 function toggleCategoryFields(){
   const fine=$('materialCategory').value==='ریزدانه';
   $('baseModulusField').style.display=fine?'flex':'none';
-  const cls=$('spClass'),old=cls.value;
+
+  const cls=$('spClass');
+  const old=cls.value;
+
   cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';
+
   Object.keys(ranges)
     .filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن'))
     .forEach(k=>cls.add(new Option(k,k)));
+
   if([...cls.options].some(o=>o.value===old))cls.value=old;
+
   updateRanges();
 }
 
 function updateRanges(){
   const r=ranges[$('spClass').value]||{};
+
   sieves.forEach(s=>{
     $('rng-'+s).textContent=r[s]?r[s].join(' - ')+'%':'-';
   });
+
   invalidate();
 }
 
@@ -280,8 +606,10 @@ function calculate(){
 
   if(!Number.isFinite(total)||total<=0)
     return alert('وزن کل نمونه باید عددی مثبت باشد.');
+
   if(!Number.isFinite(after)||after<=0||after>total)
     return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');
+
   if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0))
     return alert('مدول نرمی مبنا باید مثبت باشد.');
 
@@ -289,10 +617,13 @@ function calculate(){
 
   for(const s of sieves){
     const raw=normalizeDigits($('w-'+s).value);
+
     if(raw!==''&&(!Number.isFinite(Number(raw))||Number(raw)<0))
       return alert('وزن الک نامعتبر است.');
+
     weights[s]=raw===''?0:Number(raw);
     sum+=weights[s];
+
     if(raw!=='')entered=true;
   }
 
@@ -313,6 +644,7 @@ function calculate(){
   }
 
   const hasPan=$('w-0.075').value!=='';
+
   if(!hasPan)passing['0.075']=passing200;
 
   const fmSieves=['4.75','2.36','1.18','0.6','0.3','0.15'];
@@ -324,8 +656,10 @@ function calculate(){
 
   if(diff>tol)
     warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
+
   if(cat==='ریزدانه'&&Math.abs(fm-base)>.2)
     warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
+
   if(panMismatch)
     warnings.push('اختلاف عبوری الک ۰٫۰۷۵ میلی‌متر با افت شستشو بیش از ۰٫۳ واحد درصد است.');
 
@@ -337,13 +671,17 @@ function calculate(){
     $('pas-'+s).textContent=passing[s].toFixed(1)+'%';
 
     let status='-';
+
     if(r[s]){
-      let [lo,hi]=r[s];
-      status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8?'منطبق':'نامنطبق';
+      const [lo,hi]=r[s];
+      status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8
+        ?'منطبق':'نامنطبق';
     }
 
     $('cmp-'+s).textContent=status;
-    $('cmp-'+s).className=status==='منطبق'?'ok':status==='نامنطبق'?'not-ok':'';
+    $('cmp-'+s).className=
+      status==='منطبق'?'ok':
+      status==='نامنطبق'?'not-ok':'';
   }
 
   $('tvFm').textContent=cat==='ریزدانه'?fm.toFixed(2):'-';
@@ -351,23 +689,78 @@ function calculate(){
   $('warnBox').textContent=warnings.join(' | ');
 
   lastResult={
-    weights,retained,cumulative,passing,passing200,fm,warnings,
-    total,after,cls,cat,diff,tol,panMismatch,acceptanceValid
+    weights,retained,cumulative,passing,
+    passing200,fm,warnings,total,after,cls,cat,
+    diff,tol,panMismatch,acceptanceValid
   };
 
   showUsageMessages();
   drawChart();
 }
 
-/* نمودار: حاشیه افقی ۵ درصد، خطوط فرعی عمودی محور درصد هر ۵ واحد */
+/*
+  تنظیمات جدید نمودار:
+
+  - محور از 0.001 شروع نمی‌شود.
+  - اولین نقطه نمودار بعد از فاصله‌ای معادل دو عرض لیبل قرار می‌گیرد.
+  - همه لیبل‌ها فقط در یک ردیف هستند.
+  - فاصله خالی بین دو لیبل برابر عرض یک لیبل است.
+  - در صورت کمبود عرض، نمودار افقی پیمایش می‌شود.
+  - خطوط افقی فرعی هر 5 درصد و خطوط اصلی هر 10 درصد هستند.
+*/
+
 function drawChart(){
   const canvas=$('gradingChart');
-  if(!canvas)return;
-
   const wrap=canvas.parentElement;
-  const width=Math.max(280,wrap.clientWidth);
+
   const height=350;
   const dpr=Math.min(window.devicePixelRatio||1,3);
+
+  const range=ranges[$('spClass').value]||{};
+  const rangeKeys=Object.keys(range).map(Number);
+
+  const ascending=sieves.map(Number).sort((a,b)=>a-b);
+
+  const firstFull=lastResult
+    ?ascending.find(v=>lastResult.passing[String(v)]>=99.999999)
+    :undefined;
+
+  const upper=Math.max(firstFull||0,...rangeKeys,9.5);
+
+  // کوچک‌ترین اندازه واقعی الک؛ حذف بازه خالی 0.001
+  const firstSieve=Number(ascending[0]);
+  const upperSafe=Math.max(upper,firstSieve*1.01);
+
+  const ticks=sieves.slice().reverse()
+    .filter(s=>Number(s)>=firstSieve&&Number(s)<=upperSafe);
+
+  // اندازه واقعی لیبل‌ها برای تعیین فاصله
+  const measureCanvas=document.createElement('canvas');
+  const mc=measureCanvas.getContext('2d');
+  mc.font='10px Arial';
+
+  const labelWidths=ticks.map(s=>{
+    const label=sieveLabels[s]||s;
+    return Math.max(18,mc.measureText(label).width+2);
+  });
+
+  const maxLabelWidth=Math.max(20,...labelWidths);
+
+  // فاصله مرکز تا مرکز لیبل‌ها = دو عرض لیبل
+  const labelStep=maxLabelWidth*2;
+
+  // عرض کافی برای یک ردیف لیبل و فاصله خالی بین آن‌ها
+  const labelAreaWidth=Math.max(
+    0,
+    ticks.length*labelStep
+  );
+
+  const viewportWidth=Math.max(280,wrap.clientWidth-8);
+
+  const width=Math.max(
+    viewportWidth,
+    54+16+labelAreaWidth+maxLabelWidth*2
+  );
 
   canvas.style.width=width+'px';
   canvas.style.height=height+'px';
@@ -383,27 +776,24 @@ function drawChart(){
   const pw=width-m.left-m.right;
   const ph=height-m.top-m.bottom;
 
-  const range=ranges[$('spClass').value]||{};
-  const rangeKeys=Object.keys(range).map(Number);
-  const ascending=sieves.map(Number).sort((a,b)=>a-b);
-  const firstFull=lastResult
-    ?ascending.find(v=>lastResult.passing[String(v)]>=99.999999)
-    :undefined;
+  const logLow=Math.log10(firstSieve);
+  const logHigh=Math.log10(upperSafe);
 
-  const upper=Math.max(firstFull||0,...rangeKeys,9.5);
-  const lower=0.001;
-  const logLow=Math.log10(lower);
-  const logHigh=Math.log10(upper);
+  /*
+    اولین نقطه منحنی دقیقاً دو عرض لیبل از محور عمودی فاصله دارد.
+  */
+  const firstPointGap=maxLabelWidth*2;
+  const usableWidth=Math.max(1,pw-firstPointGap);
 
-  // ۵ درصد فضای خالی در ابتدا و انتهای محور افقی
-  const x=v=>m.left+pw*.05+
-    (Math.log10(Number(v))-logLow)/(logHigh-logLow)*pw*.90;
+  const x=v=>{
+    const value=Math.max(firstSieve,Math.min(upperSafe,Number(v)));
+    return m.left+firstPointGap+
+      (Math.log10(value)-logLow)/(logHigh-logLow)*usableWidth;
+  };
 
   const y=v=>m.top+(100-v)/100*ph;
-  const inside=v=>Number(v)>=lower&&Number(v)<=upper;
-  const ticks=sieves.slice().reverse().filter(inside);
 
-  // خطوط افقی اصلی و فرعی: خطوط اصلی هر ۱۰ و فرعی هر ۵ درصد
+  // خطوط افقی اصلی و فرعی
   c.font='10px Arial';
   c.textBaseline='middle';
   c.textAlign='right';
@@ -414,10 +804,8 @@ function drawChart(){
 
     c.beginPath();
     c.setLineDash([]);
-    c.strokeStyle=major
-      ?((p===0||p===100)?'#9fb2c7':'#e1e9f2')
-      :'#edf2f7';
-    c.lineWidth=major?((p===0||p===100)?1.1:.75):.55;
+    c.strokeStyle=major?'#d8e3ef':'#edf2f7';
+    c.lineWidth=major?.85:.55;
     c.moveTo(m.left,yy);
     c.lineTo(width-m.right,yy);
     c.stroke();
@@ -437,8 +825,8 @@ function drawChart(){
   ticks.forEach(s=>{
     c.beginPath();
     c.setLineDash([4,4]);
-    c.lineWidth=.85;
-    c.strokeStyle='#111827';
+    c.lineWidth=.8;
+    c.strokeStyle='#64748b';
     c.moveTo(x(s),y(100));
     c.lineTo(x(s),y(0));
     c.stroke();
@@ -447,37 +835,38 @@ function drawChart(){
   c.restore();
   c.setLineDash([]);
 
-  // برچسب‌ها در دو ردیف با کنترل فاصله واقعی متن
-  c.font='9px Arial';
+  /*
+    لیبل‌ها در یک ردیف:
+    مرکز هر لیبل با فاصله ثابت از مرکز لیبل بعدی قرار می‌گیرد.
+    فاصله خالی بین دو لیبل یک عرض کامل لیبل است.
+  */
+  c.font='10px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
   c.fillStyle='#26374d';
 
-  const placed=[[],[]];
+  const labelStart=m.left+maxLabelWidth;
+  const labelY=24;
 
-  ticks.forEach(s=>{
+  ticks.forEach((s,i)=>{
     const label=sieveLabels[s]||s;
-    const xx=x(s);
-    const half=c.measureText(label).width/2+4;
+    const labelX=labelStart+i*labelStep;
 
-    let row=placed.findIndex(items=>
-      items.every(p=>Math.abs(p.x-xx)>p.half+half)
-    );
+    c.fillText(label,labelX,labelY);
 
-    if(row<0)return;
-
-    placed[row].push({x:xx,half});
-    c.fillText(label,xx,row===0?m.top-35:m.top-19);
+    // اتصال لیبل به خط عمودی متناظر
+    const actualX=x(s);
 
     c.beginPath();
     c.setLineDash([]);
-    c.strokeStyle='#64748b';
-    c.lineWidth=.6;
-    c.moveTo(xx,m.top-10);
-    c.lineTo(xx,m.top-2);
+    c.strokeStyle='#9aaabd';
+    c.lineWidth=.55;
+    c.moveTo(labelX,labelY+8);
+    c.lineTo(actualX,m.top-2);
     c.stroke();
   });
 
+  // کادر نمودار
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.setLineDash([]);
@@ -492,6 +881,7 @@ function drawChart(){
     c.clip();
 
     c.beginPath();
+
     points.forEach(([sx,sy],i)=>{
       if(i===0)c.moveTo(x(sx),y(sy));
       else c.lineTo(x(sx),y(sy));
@@ -504,19 +894,35 @@ function drawChart(){
     c.restore();
   }
 
-  const keys=Object.keys(range).sort((a,b)=>Number(a)-Number(b));
+  // منحنی‌های محدوده استاندارد
+  const keys=Object.keys(range)
+    .sort((a,b)=>Number(a)-Number(b));
 
-  line(keys.map(k=>[k,range[k][0]]),'#111',[],1.4);
-  line(keys.map(k=>[k,range[k][1]]),'#111',[],1.4);
+  line(
+    keys.map(k=>[k,range[k][0]]),
+    '#111',
+    [],
+    1.4
+  );
 
+  line(
+    keys.map(k=>[k,range[k][1]]),
+    '#111',
+    [],
+    1.4
+  );
+
+  // منحنی نمونه
   if(lastResult){
-    const sample=ticks
-      .map(s=>[s,lastResult.passing[s]])
+    const sample=ascending
+      .filter(s=>s>=firstSieve&&s<=upperSafe)
+      .map(s=>[s,lastResult.passing[String(s)]])
       .filter(([s,p])=>Number.isFinite(p));
 
-    line(sample,'#dc0000',[5,4],1.7);
+    line(sample,'#dc0000',[5,4],1.8);
 
     c.fillStyle='#dc0000';
+
     sample.forEach(([s,p])=>{
       c.beginPath();
       c.arc(x(s),y(p),2.5,0,Math.PI*2);
@@ -524,12 +930,14 @@ function drawChart(){
     });
   }
 
+  // عنوان محور افقی
   c.fillStyle='#243c5b';
   c.font='bold 12px Tahoma,Arial';
   c.textAlign='center';
   c.textBaseline='middle';
   c.fillText('اندازه سنگدانه (mm)',m.left+pw/2,height-17);
 
+  // عنوان محور عمودی
   c.save();
   c.translate(18,m.top+ph/2);
   c.rotate(-Math.PI/2);
@@ -540,17 +948,23 @@ function drawChart(){
 function showUsageMessages(){
   const box=$('usageResults');
   box.replaceChildren();
+
   if(!lastResult)return;
 
   function add(text,allowed,caution=false){
     const el=document.createElement('div');
-    el.className='usage-message '+(caution?'caution':allowed?'allow':'deny');
+    el.className='usage-message '+
+      (caution?'caution':allowed?'allow':'deny');
     el.textContent=text;
     box.appendChild(el);
   }
 
   if(!lastResult.acceptanceValid){
-    add('نتایج این آزمون برای اهداف پذیرش قابل قبول نمی‌باشد.',false,true);
+    add(
+      'نتایج این آزمون برای اهداف پذیرش قابل قبول نمی‌باشد.',
+      false,
+      true
+    );
     return;
   }
 
@@ -560,12 +974,28 @@ function showUsageMessages(){
   if(lastResult.cat==='درشت‌دانه'){
     const maxFine=crushed?1.5:1.0;
     const allowed=pct<=maxFine;
-    const limit=crushed?'۱٫۵٪ برای سنگدانه شکسته':'۱٪ برای سنگدانه گردگوشه/طبیعی';
+
+    const limit=crushed
+      ?'۱٫۵٪ برای سنگدانه شکسته'
+      :'۱٪ برای سنگدانه گردگوشه/طبیعی';
+
     const result=allowed?'مجاز است.':'مجاز نیست.';
 
-    add(`استفاده در بتن معمولی و بتن مسلح: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
-    add(`استفاده در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
-    add(`استفاده در بتن در معرض یخ‌زدگی و ذوب: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
+    add(
+      `استفاده در بتن معمولی و بتن مسلح: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,
+      allowed
+    );
+
+    add(
+      `استفاده در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,
+      allowed
+    );
+
+    add(
+      `استفاده در بتن در معرض یخ‌زدگی و ذوب: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,
+      allowed
+    );
+
     return;
   }
 
@@ -573,6 +1003,7 @@ function showUsageMessages(){
 
   const cls=lastResult.cls;
   const special=cls==='ماسه رده3';
+
   let ordinaryMax,abrasionMax;
 
   if(special){
@@ -585,61 +1016,137 @@ function showUsageMessages(){
 
   const ordinaryName=special?'بتن خودتراکم':'بتن معمولی';
 
-  add(`استفاده از سنگدانه ریز برای ${ordinaryName}: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=ordinaryMax?'مجاز است.':'مجاز نیست.'}`,pct<=ordinaryMax);
-  add(`استفاده از سنگدانه ریز در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=abrasionMax?'مجاز است.':'مجاز نیست.'}`,pct<=abrasionMax);
+  add(
+    `استفاده از سنگدانه ریز برای ${ordinaryName}: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=ordinaryMax?'مجاز است.':'مجاز نیست.'}`,
+    pct<=ordinaryMax
+  );
+
+  add(
+    `استفاده از سنگدانه ریز در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=abrasionMax?'مجاز است.':'مجاز نیست.'}`,
+    pct<=abrasionMax
+  );
 }
 
 function resetAll(){
-  document.querySelectorAll('input.numeric').forEach(e=>e.value='');
+  document.querySelectorAll('input.numeric').forEach(e=>{
+    e.value='';
+  });
+
   $('baseModulus').value='2.90';
+
   invalidate();
 }
 
-/* ساخت PDF، ذخیره در حافظه موقت اندروید و بازکردن با PDFخوان */
-async function exportPDF(){
-  if(!lastResult)
-    return alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
+/* ساخت گزارش PDF */
+function safeText(v){
+  return String(v??'—').replace(/[&<>"']/g,ch=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
 
-  if(typeof window.html2pdf!=='function')
-    return alert('کتابخانه PDF در برنامه موجود نیست.');
-
-  if(!window.NativePDF||
-     !window.NativePDF.Filesystem||
-     !window.NativePDF.FileOpener){
-    return alert('اتصال PDF اندروید آماده نیست. برنامه را دوباره از GitHub Actions بسازید و نصب کنید.');
-  }
-
+function buildPDFReport(){
   const report=document.createElement('div');
+
   report.dir='rtl';
   report.lang='fa';
-  report.style.cssText='position:fixed;left:-15000px;top:0;width:1100px;padding:28px;background:#fff;color:#172b43;font:14px Tahoma,Arial,sans-serif;direction:rtl;z-index:-1;';
+
+  /*
+    گزارش عمداً خارج از صفحه قرار نمی‌گیرد؛
+    html2canvas عناصر خارج از محدوده صفحه را ممکن است سفید ثبت کند.
+  */
+  report.style.cssText=`
+    position:fixed;
+    left:0;
+    top:0;
+    width:1100px;
+    min-height:700px;
+    padding:28px;
+    background:#ffffff;
+    color:#172b43;
+    font:14px Tahoma,Arial,sans-serif;
+    direction:rtl;
+    z-index:999999;
+    overflow:visible;
+  `;
 
   const title=document.createElement('div');
-  title.style.cssText='text-align:center;font-size:22px;font-weight:bold;line-height:1.8;margin-bottom:18px;border-bottom:2px solid #244e79;padding-bottom:12px;';
-  title.innerHTML='<div>دانه بندی سنگدانه ریز و درشت</div><div style="font-size:15px;font-weight:normal">استاندارد ملی ایران شماره های 302-406-4977</div>';
+  title.style.cssText=`
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    line-height:1.8;
+    margin-bottom:18px;
+    border-bottom:2px solid #244e79;
+    padding-bottom:12px;
+  `;
+
+  title.innerHTML=`
+    <div>دانه بندی سنگدانه ریز و درشت</div>
+    <div style="font-size:15px;font-weight:normal">
+      استاندارد ملی ایران شماره های 302-406-4977
+    </div>
+  `;
+
   report.appendChild(title);
 
-  const safeText=v=>String(v||'—').replace(/[&<>"']/g,ch=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[ch]));
-
   const meta=document.createElement('div');
-  meta.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;font-size:13px;';
+
+  meta.style.cssText=`
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:18px;
+    font-size:13px;
+    line-height:2;
+  `;
+
   meta.innerHTML=`
     <div>نام شرکت: ${safeText($('company').value)}</div>
     <div>شماره نمونه: ${safeText($('sampleId').value)}</div>
     <div>تاریخ: ${safeText($('date').value)}</div>
     <div>نوع سنگدانه: ${safeText($('materialName').value)}</div>
+    <div>نوع: ${safeText(lastResult.cat)}</div>
     <div>کلاس: ${safeText(lastResult.cls)}</div>
-    <div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>`;
+    <div>وزن کل: ${lastResult.total} گرم</div>
+    <div>وزن بعد از شستشو: ${lastResult.after} گرم</div>
+  `;
+
   report.appendChild(meta);
 
   const table=document.createElement('table');
-  table.style.cssText='width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;direction:rtl;';
-  table.innerHTML='<thead><tr>'+
-    ['نمره الک','وزن مانده (گرم)','مانده (%)','تجمعی (%)','عبوری (%)','محدوده مجاز','انطباق']
-      .map(t=>`<th style="background:#eaf2fb;border:1px solid #b9cce0;padding:6px">${t}</th>`)
-      .join('')+'</tr></thead>';
+
+  table.style.cssText=`
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+    margin-bottom:16px;
+    direction:rtl;
+  `;
+
+  table.innerHTML=`
+    <thead>
+      <tr>
+        ${[
+          'نمره الک',
+          'وزن مانده (گرم)',
+          'مانده (%)',
+          'تجمعی (%)',
+          'عبوری (%)',
+          'محدوده مجاز',
+          'انطباق'
+        ].map(t=>`
+          <th style="
+            background:#eaf2fb;
+            border:1px solid #b9cce0;
+            padding:7px;
+          ">${t}</th>`).join('')}
+      </tr>
+    </thead>
+  `;
 
   const tbody=document.createElement('tbody');
 
@@ -657,9 +1164,13 @@ async function exportPDF(){
       $('cmp-'+sieve).textContent
     ];
 
-    row.innerHTML=values.map(v=>
-      `<td style="border:1px solid #d5e0eb;padding:5px;text-align:center">${safeText(v)}</td>`
-    ).join('');
+    row.innerHTML=values.map(v=>`
+      <td style="
+        border:1px solid #d5e0eb;
+        padding:6px;
+        text-align:center;
+      ">${safeText(v)}</td>
+    `).join('');
 
     tbody.appendChild(row);
   }
@@ -668,70 +1179,143 @@ async function exportPDF(){
   report.appendChild(table);
 
   const summary=document.createElement('div');
-  summary.style.cssText='margin:10px 0;padding:10px;background:#f0f7ff;border:1px solid #d5e5f5;border-radius:8px;line-height:2';
+
+  summary.style.cssText=`
+    margin:10px 0;
+    padding:12px;
+    background:#f0f7ff;
+    border:1px solid #d5e5f5;
+    border-radius:8px;
+    line-height:2;
+  `;
+
   summary.textContent=
-    `مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
+    `مدول نرمی: ${
+      lastResult.cat==='ریزدانه'
+        ?lastResult.fm.toFixed(2)
+        :'—'
+    } | عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
+
   report.appendChild(summary);
 
   const chartTitle=document.createElement('h3');
   chartTitle.textContent='نمودار نیمه‌لگاریتمی دانه‌بندی';
   chartTitle.style.cssText='text-align:center;margin:18px 0 8px';
+
   report.appendChild(chartTitle);
 
   const chartImage=document.createElement('img');
+
   chartImage.src=$('gradingChart').toDataURL('image/png');
-  chartImage.style.cssText='display:block;width:100%;height:auto;';
+
+  chartImage.style.cssText=`
+    display:block;
+    width:100%;
+    height:auto;
+    border:1px solid #e2e8f0;
+  `;
+
   report.appendChild(chartImage);
 
   const conditions=$('usageResults').cloneNode(true);
-  conditions.style.cssText='display:grid;gap:7px;margin-top:14px;';
+
+  conditions.style.cssText=`
+    display:grid;
+    gap:7px;
+    margin-top:14px;
+  `;
+
   report.appendChild(conditions);
 
-  document.body.appendChild(report);
+  return report;
+}
+
+async function exportPDF(){
+  if(!lastResult){
+    alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
+    return;
+  }
+
+  if(typeof window.html2pdf!=='function'){
+    alert('کتابخانه ساخت PDF در برنامه بارگذاری نشده است.');
+    return;
+  }
+
+  if(!window.NativePDF){
+    alert('امکانات ذخیره و بازکردن PDF در برنامه بارگذاری نشده است. برنامه را دوباره بسازید.');
+    return;
+  }
+
+  let report=null;
 
   try{
-    if(document.fonts&&document.fonts.ready)
-      await document.fonts.ready;
+    report=buildPDFReport();
+    document.body.appendChild(report);
 
-    // تولید PDF به صورت Blob، بدون دانلود مرورگری
+    // فرصت برای آماده‌شدن تصویر نمودار و رندر گزارش
+    await new Promise(resolve=>requestAnimationFrame(()=>{
+      requestAnimationFrame(resolve);
+    }));
+
     const pdfBlob=await window.html2pdf()
       .set({
         margin:[8,8,8,8],
-        image:{type:'jpeg',quality:0.98},
+        image:{
+          type:'jpeg',
+          quality:0.98
+        },
         html2canvas:{
           scale:2,
           useCORS:false,
           backgroundColor:'#ffffff',
-          logging:false
+          logging:false,
+          scrollX:0,
+          scrollY:0,
+          windowWidth:1200,
+          windowHeight:1600
         },
         jsPDF:{
           unit:'mm',
           format:'a4',
           orientation:'landscape'
         },
-        pagebreak:{mode:['css','legacy']}
+        pagebreak:{
+          mode:['css','legacy']
+        }
       })
       .from(report)
       .outputPdf('blob');
 
-    if(!pdfBlob||pdfBlob.size===0)
-      throw new Error('فایل PDF خالی تولید شده است.');
+    if(!pdfBlob||pdfBlob.size<1000){
+      throw new Error('فایل PDF ساخته‌شده خالی یا ناقص است.');
+    }
 
-    // تبدیل Blob به Base64 برای ذخیره با Capacitor Filesystem
+    // تبدیل PDF به Base64
     const base64=await new Promise((resolve,reject)=>{
       const reader=new FileReader();
+
       reader.onload=()=>{
-        const result=String(reader.result||'');
+        const result=String(reader.result);
         const comma=result.indexOf(',');
-        if(comma<0)return reject(new Error('تبدیل فایل PDF ناموفق بود.'));
+
+        if(comma<0){
+          reject(new Error('تبدیل فایل PDF به داده قابل ذخیره ناموفق بود.'));
+          return;
+        }
+
         resolve(result.substring(comma+1));
       };
-      reader.onerror=()=>reject(reader.error||new Error('خطا در خواندن فایل PDF'));
+
+      reader.onerror=()=>{
+        reject(new Error('خواندن فایل PDF ناموفق بود.'));
+      };
+
       reader.readAsDataURL(pdfBlob);
     });
 
     const fileName=`Sieve-Analysis-${Date.now()}.pdf`;
 
+    // ذخیره در حافظه Cache برنامه
     const saved=await window.NativePDF.Filesystem.writeFile({
       path:fileName,
       data:base64,
@@ -739,10 +1323,11 @@ async function exportPDF(){
       recursive:true
     });
 
-    if(!saved||!saved.uri)
-      throw new Error('فایل PDF در حافظه موقت ذخیره نشد.');
+    if(!saved||!saved.uri){
+      throw new Error('ذخیره فایل PDF در حافظه گوشی ناموفق بود.');
+    }
 
-    // بازکردن PDF با برنامه پیش‌فرض دستگاه
+    // بازکردن فایل با PDFخوان اندروید
     await window.NativePDF.FileOpener.open({
       filePath:saved.uri,
       contentType:'application/pdf',
@@ -750,11 +1335,16 @@ async function exportPDF(){
     });
 
   }catch(error){
-    console.error('PDF export failed:',error);
-    const detail=error&&error.message?error.message:String(error);
-    alert('ساخت یا بازکردن PDF ناموفق بود.\n' + detail);
+    console.error('PDF export error:',error);
+
+    const message=error?.message
+      ?String(error.message)
+      :'خطای نامشخص';
+
+    alert('ساخت یا نمایش PDF ناموفق بود:\n'+message);
+
   }finally{
-    report.remove();
+    if(report)report.remove();
   }
 }
 
@@ -765,15 +1355,19 @@ $('materialName').addEventListener('change',invalidate);
   $(id).addEventListener('input',()=>{
     const el=$(id);
     const v=cleanNumeric(el.value);
+
     if(el.value!==v)el.value=v;
+
     invalidate();
   });
 });
 
-window.addEventListener('resize',drawChart);
+window.addEventListener('resize',()=>{
+  drawChart();
+});
 
 buildTable();
 toggleCategoryFields();
 </script>
 </body>
-  </html>
+       </html>
