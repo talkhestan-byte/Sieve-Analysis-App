@@ -431,11 +431,14 @@ function calculate(){
   drawChart();
 }
 
-/* نمودار نیمه‌لگاریتمی با عرض متناسب صفحه
-   شروع محور: 0.002 میلی‌متر
-   شروع منحنی: الک 0.075 میلی‌متر
-   انتهای منحنی: کوچک‌ترین الک با عبوری 100 درصد
-   فضای خالی دو طرف منحنی: حدود دو عرض لیبل */
+/* نمودار نیمه‌لگاریتمی:
+   - عرض متناسب با عرض صفحه
+   - شروع عادی محور از 0.002 میلی‌متر
+   - در صورت وجود سه درصد عبوری مشابه در انتهای ریزدانه‌بندی،
+     شروع محور از اندازه الک سوم آن سه مقدار
+   - انتهای محور بر اساس کوچک‌ترین الک با عبوری 100 درصد
+   - لیبل‌ها در یک ردیف
+   - خطوط افقی اصلی هر 10 درصد و فرعی هر 5 درصد */
 function drawChart(){
   const canvas=$('gradingChart');
   const wrap=canvas.parentElement;
@@ -460,9 +463,9 @@ function drawChart(){
   const ph=height-m.top-m.bottom;
 
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
-  const firstSieve=ascending[0];
 
-  // تعیین کوچک‌ترین الکی که عبوری نمونه از آن 100 درصد است
+  /* شرط قبلی انتهای نمودار:
+     پیدا کردن کوچک‌ترین الکی که عبوری آن 100 درصد شده است */
   let terminalSieve=ascending[ascending.length-1];
 
   if(lastResult){
@@ -474,29 +477,64 @@ function drawChart(){
     if(firstFull!==undefined)terminalSieve=firstFull;
   }
 
-  // الک بعدی بعد از کوچک‌ترین الک 100 درصدی
   let terminalIndex=ascending.indexOf(terminalSieve);
   let nextSieve=ascending[Math.min(terminalIndex+1,ascending.length-1)];
 
-  // فضای نمودار: دو عرض لیبل در هر طرف
+  /* شرط جدید:
+     بررسی سه مقدار عبوری متوالی از سمت الک‌های ریز.
+     اگر اختلاف بیشترین و کمترین مقدار این سه عدد حداکثر 0.1
+     واحد درصد باشد، ابتدای محور از الک سوم آن مجموعه آغاز می‌شود.
+     در غیر این صورت، ابتدای محور همان 0.002 میلی‌متر می‌ماند. */
+  const SIMILAR_PASSING_TOLERANCE=0.1;
+  let axisMin=0.002;
+  let similarStartSieve=null;
+
+  if(lastResult){
+    for(let i=0;i<=ascending.length-3;i++){
+      const s1=ascending[i];
+      const s2=ascending[i+1];
+      const s3=ascending[i+2];
+
+      const p1=lastResult.passing[String(s1)];
+      const p2=lastResult.passing[String(s2)];
+      const p3=lastResult.passing[String(s3)];
+
+      if(
+        Number.isFinite(p1)&&
+        Number.isFinite(p2)&&
+        Number.isFinite(p3)
+      ){
+        const values=[p1,p2,p3];
+        const difference=Math.max(...values)-Math.min(...values);
+
+        if(difference<=SIMILAR_PASSING_TOLERANCE){
+          similarStartSieve=s3;
+          axisMin=s3;
+          break;
+        }
+      }
+    }
+  }
+
+  /* تعیین فضای ابتدا و انتهای محور بر مبنای فاصله لیبل‌ها */
   const labelGap=Math.max(24,Math.min(34,width*.075));
   const plotLeft=m.left+labelGap;
   const plotRight=width-m.right-labelGap;
   const plotWidth=Math.max(80,plotRight-plotLeft);
 
-  // مقیاس لگاریتمی بین اولین و آخرین الک قابل نمایش
-  const logLow=Math.log10(firstSieve);
-  const logHigh=Math.log10(Math.max(nextSieve,firstSieve*1.15));
+  const logLow=Math.log10(axisMin);
+  const axisMax=Math.max(nextSieve,terminalSieve*1.15);
+  const logHigh=Math.log10(axisMax);
 
   const x=v=>{
-    const value=Math.max(firstSieve,Math.min(Number(v),Math.pow(10,logHigh)));
+    const value=Math.max(axisMin,Math.min(Number(v),axisMax));
     return plotLeft+
       (Math.log10(value)-logLow)/(logHigh-logLow)*plotWidth;
   };
 
   const y=v=>m.top+(100-v)/100*ph;
 
-  // خطوط افقی اصلی هر 10 درصد و فرعی هر 5 درصد
+  /* خطوط افقی اصلی و فرعی */
   c.font='10px Arial';
   c.textBaseline='middle';
   c.textAlign='right';
@@ -519,14 +557,14 @@ function drawChart(){
     }
   }
 
-  // خطوط عمودی الک‌ها
+  /* خطوط عمودی الک‌ها */
   c.save();
   c.beginPath();
   c.rect(m.left,m.top,width-m.left-m.right,ph);
   c.clip();
 
   ascending.forEach(s=>{
-    if(s>terminalSieve)return;
+    if(s<axisMin||s>terminalSieve)return;
 
     const xx=x(s);
     c.beginPath();
@@ -541,7 +579,7 @@ function drawChart(){
   c.restore();
   c.setLineDash([]);
 
-  // خط محور افقی
+  /* خط محور افقی */
   c.beginPath();
   c.strokeStyle='#26374d';
   c.lineWidth=1;
@@ -549,21 +587,26 @@ function drawChart(){
   c.lineTo(width-m.right,m.top+ph);
   c.stroke();
 
-  // نمایش مقدار شروع محور
+  /* برچسب ابتدای محور */
   c.font='8px Arial';
   c.textAlign='left';
   c.textBaseline='top';
   c.fillStyle='#26374d';
-  c.fillText('0.002',m.left,m.top+ph+8);
 
-  // لیبل‌های الک در یک ردیف
+  if(similarStartSieve!==null){
+    c.fillText(String(similarStartSieve),m.left,m.top+ph+8);
+  }else{
+    c.fillText('0.002',m.left,m.top+ph+8);
+  }
+
+  /* لیبل‌های الک در یک ردیف */
   c.font='7px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
   c.fillStyle='#26374d';
 
   ascending.forEach(s=>{
-    if(s>terminalSieve)return;
+    if(s<axisMin||s>terminalSieve)return;
 
     const xx=x(s);
     const label=sieveLabels[String(s)]||String(s);
@@ -578,13 +621,13 @@ function drawChart(){
     c.stroke();
   });
 
-  // لیبل الک بعدی در انتهای محور
+  /* لیبل الک بعدی در انتهای محور */
   if(nextSieve>terminalSieve){
     const endX=plotRight;
     c.fillText(sieveLabels[String(nextSieve)]||String(nextSieve),endX,m.top-22);
   }
 
-  // کادر محدوده رسم
+  /* کادر محدوده رسم */
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.setLineDash([]);
@@ -612,20 +655,20 @@ function drawChart(){
     c.restore();
   }
 
+  /* حدود استاندارد */
   const range=ranges[$('spClass').value]||{};
   const keys=Object.keys(range)
     .map(Number)
-    .filter(k=>k<=terminalSieve)
+    .filter(k=>k>=axisMin&&k<=terminalSieve)
     .sort((a,b)=>a-b);
 
-  // حدود استاندارد
   line(keys.map(k=>[k,range[String(k)][0]]),'#111',[],1.4);
   line(keys.map(k=>[k,range[String(k)][1]]),'#111',[],1.4);
 
-  // منحنی نمونه
+  /* منحنی نمونه */
   if(lastResult){
     const sample=ascending
-      .filter(s=>s<=terminalSieve)
+      .filter(s=>s>=axisMin&&s<=terminalSieve)
       .map(s=>[s,lastResult.passing[String(s)]])
       .filter(([s,p])=>Number.isFinite(p));
 
@@ -640,7 +683,7 @@ function drawChart(){
     });
   }
 
-  // عناوین محورها
+  /* عناوین محورها */
   c.fillStyle='#243c5b';
   c.font='bold 11px Tahoma,Arial';
   c.textAlign='center';
