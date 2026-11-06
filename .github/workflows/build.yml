@@ -32,31 +32,31 @@ jobs:
         run: |
           set -eu
           
-          # فایل‌ها از قبل در پوشه www هستند
+          # 1. اطمینان از وجود فایل HTML
           test -s www/index.html
           
-          # اگر native-pdf.js دارید، آن را باندل کنید
-          if [ -f www/native-pdf.js ]; then
-            npm install --save-dev esbuild
-            npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
-          fi
-
+          # 2. ساخت فایل package.json اولیه
           npm init -y
 
-          # نصب پکیج‌های کپسیتور
+          # 3. نصب همه پکیج‌های کپسیتور و پلاگین‌ها (قبل از باندل کردن)
           npm install @capacitor/core@6 @capacitor/android@6
-          npm install --save-dev @capacitor/cli@6 typescript
+          npm install --save-dev @capacitor/cli@6 typescript esbuild
           
           # نصب پلاگین پرداخت کافه‌بازار
           npm install @salarizadi/capacitor-cafebazaar-poolakey
 
-          # نصب پلاگین‌های کمکی در صورت نیاز
+          # نصب پلاگین‌های مورد نیاز فایل native-pdf.js
           npm install @capacitor/filesystem@6
           npm install @capacitor-community/file-opener@6.0.1
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
 
-          # کپی فایل‌های کتابخانه‌های جانبی به پوشه www
+          # 4. حالا که پکیج‌ها نصب شدند، فایل native-pdf.js را باندل می‌کنیم
+          if [ -f www/native-pdf.js ]; then
+            npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
+          fi
+
+          # 5. کپی کتابخانه‌های جانبی به پوشه www
           if [ -d "node_modules/html2pdf.js/dist" ]; then
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
