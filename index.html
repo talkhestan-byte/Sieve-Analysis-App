@@ -453,7 +453,36 @@ function calculate(){
     weights,retained,cumulative,passing,passing200,fm,warnings,
     total,after,cls,cat,diff,tol,panMismatch,acceptanceValid
   };
+    // ================== بررسی وضعیت پرداخت ==================
+  // اگر کاربر قبلا خرید نکرده باشد
+  if (!isPurchased) {
+      if (!hasUsedFreeTrial) {
+          // اگر اولین بار است، اجازه بده نتیجه را ببیند و تیک رایگان را بزن
+          hasUsedFreeTrial = true;
+          localStorage.setItem('app_free_trial_used', 'true');
+          alert("شما از یک بار محاسبه رایگان خود استفاده کردید. برای محاسبات بعدی و خروجی PDF، لطفاً برنامه را خریداری کنید.");
+          
+          showUsageMessages();
+          drawChart();
+          return; // ادامه کد را متوقف نکن، بگذار کاربر نتیجه را ببیند
+      } else {
+          // اگر قبلا رایگان استفاده کرده، جلوی نمایش نتیجه را بگیر و پیام بده
+          // ابتدا نتایج قبلی را پاک کن تا کاربر فکر نکند این نتیجه جدید است
+          $('tvFm').textContent = '-';
+          $('tvPassing200').textContent = '-';
+          $('usageResults').innerHTML = '';
+          $('warnBox').textContent = '';
+          drawChart(); // نمودار خالی رسم شود
+          
+          showPaymentDialog();
+          return; // خروج از تابع بدون نمایش نتیجه
+      }
+  }
+  // =========================================================
 
+  showUsageMessages();
+  drawChart();
+ }
   showUsageMessages();
   drawChart();
 }
