@@ -1,5 +1,13 @@
 {
-  "appId": "com.yourname.sieve",
-  "appName": "Sieve Analysis",
-  "webDir": "."
+  "name": "sieve-analysis",
+  "version": "1.0.0",
+  "description": "Sieve Analysis App",
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@salarizadi/capacitor-cafebazaar-poolakey": "^1.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
 }
