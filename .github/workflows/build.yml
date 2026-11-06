@@ -70,30 +70,29 @@ jobs:
 
           cat > capacitor.config.json <<'EOF'
           {
-            "appId": "com.yourname.sieveanalysis",
-            "appName": "Sieve Analysis",
-            "webDir": "www"
+          "appId": "com.yourname.sieveanalysis",
+          "appName": "Sieve Analysis",
+          "webDir": "www"
           }
           EOF
 
           npx cap add android
           npx cap sync android
 
-      - name: Build Debug APK
-        run: |
-          set -eu
-
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-          test -s app/build/outputs/apk/debug/app-debug.apk
-
-          cd ..
-          mkdir -p output
-
-          cp android/app/build/outputs/apk/debug/app-debug.apk \
-            output/Sieve-Analysis-debug.apk
+          # ============================================
+          # اضافه کردن مخزن JitPack به پروژه اندروید
+          # ============================================
+          # این کار برای پیدا کردن کتابخانه Poolakey ضروری است
+          PROJECT_GRADLE="android/build.gradle"
+    
+          if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
+          # پیدا کردن خط allprojects و اضافه کردن JitPack بعد از repositories
+          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+          fi
+    
+          # نمایش بخش related برای اطمینان از اعمال تغییر
+          echo "--- Checking JitPack injection in android/build.gradle ---"
+          grep -A 5 "allprojects" "$PROJECT_GRADLE" || true
 
       - name: Restore persistent signing key
         env:
