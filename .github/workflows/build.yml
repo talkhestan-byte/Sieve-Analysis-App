@@ -41,11 +41,16 @@ jobs:
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
           if [ -f www/native-pdf.js ]; then
-            npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
+          npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
           fi
           if [ -d "node_modules/html2pdf.js/dist" ]; then
-            cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
+          cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
+
+          # ============================================
+          # کپی کردن آیکون‌ها (اگر در پوشه assets باشند)
+          # ============================================
+          # این کار در مرحله Configure Capacitor انجام می‌شود
 
       - name: Configure Capacitor
         run: |
