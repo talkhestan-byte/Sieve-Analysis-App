@@ -45,6 +45,7 @@ canvas{display:block;width:100%;height:340px}
 
 /* Vista-inspired glass interface */
 body{background:radial-gradient(circle at 12% 10%,#9ee7ff 0,transparent 35%),radial-gradient(circle at 85% 25%,#c8b5ff 0,transparent 38%),linear-gradient(145deg,#e4f5ff,#e6e9ff 55%,#dcf9f4);min-height:100vh}
+
 .card{background:linear-gradient(145deg,rgba(255,255,255,.91),rgba(235,246,255,.78));border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 30px #254b832b,inset 0 1px 0 #fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:16px}
 h2{color:#124a9c;text-shadow:0 1px 0 #fff;border-bottom:1px solid #b9d6f4;padding-bottom:12px}
 .field input,.field select{background:linear-gradient(#fff,#f2f8ff);box-shadow:inset 0 1px 3px #204b7616,0 1px 0 white;border-color:#b7cce4}
@@ -98,7 +99,8 @@ button:hover{filter:brightness(1.09)}
  @page{size:A4 landscape;margin:10mm}
  body{background:#fff!important;padding:0!important;color:#111}
  .card{max-width:none;margin:0 0 8mm;padding:8px;border:1px solid #ccc;box-shadow:none;backdrop-filter:none;background:#fff!important;break-inside:avoid}
- .buttons,.action-bar{display:none!important}
+
+.buttons,.action-bar{display:none!important}
  .chart-wrap{overflow:visible}
  canvas{max-width:100%!important;height:280px!important}
  .table-container{overflow:visible}
@@ -208,45 +210,18 @@ button:hover{filter:brightness(1.09)}
   </div>
 </div>
 
+<script src="./html2pdf.bundle.min.js"></script>
+<script type="module" src="./native-pdf.bundle.js"></script>
+
 <script>
 'use strict';
-
-// ================== بخش مدیریت پرداخت درون‌برنامه‌ای ==================
-// این متغیر وضعیت پرداخت را نگه می‌دارد (پیش‌فرض: پرداخت نشده)
-let isPurchased = localStorage.getItem('app_purchased') === 'true';
-// متغیر برای بررسی اینکه آیا کاربر یک بار محاسبه رایگان را انجام داده است یا خیر
-let hasUsedFreeTrial = localStorage.getItem('app_free_trial_used') === 'true';
-
-// تابعی برای نمایش پیام و فراخوانی درگاه پرداخت
-function showPaymentDialog() {
-    // اینجا باید کد اتصال به SDK کافه‌بازار قرار بگیرد
-    // فعلاً برای تست، از یک تایید ساده استفاده می‌کنیم
-    const userWantsToPay = confirm("برای مشاهده نتایج و منحنی‌ها، باید نسخه کامل را خریداری کنید.\n\nآیا مایل به پرداخت ۵۰,۰۰۰ تومان هستید؟ (این یک پیام تستی است)");
-    
-    if (userWantsToPay) {
-        // در حالت واقعی، اینجا کد SDK کافه‌بازار صدا زده می‌شود
-        // اگر پرداخت موفق بود، این کد اجرا می‌شود:
-        processSuccessfulPayment();
-    }
-}
-
-// تابعی که پس از پرداخت موفق اجرا می‌شود
-function processSuccessfulPayment() {
-    isPurchased = true;
-    localStorage.setItem('app_purchased', 'true');
-    alert("پرداخت با موفقیت انجام شد. اکنون می‌توانید از تمام قابلیت‌ها استفاده کنید.");
-    
-    // چون پرداخت انجام شده، دکمه محاسبه باید نتیجه را نشان دهد
-    // اگر کاربر از قبل دکمه را زده بود، دوباره محاسبه می‌کنیم
-    calculate(); 
-}
-// ====================================================================
 
 const sieves=['100','90','75','63','50','37.5','25','19','12.5','9.5','4.75','2.36','1.18','0.6','0.3','0.15','0.075'];
 
 const ranges={
 'ماسه رده1':{'0.075':[0,3],'0.15':[0,10],'0.3':[5,30],'0.6':[25,60],'1.18':[50,85],'2.36':[80,100],'4.75':[95,100],'9.5':[100,100]},
 'ماسه رده2':{'0.075':[0,3],'0.15':[2,10],'0.3':[5,30],'0.6':[20,50],'1.18':[35,80],'2.36':[60,100],'4.75':[85,100],'9.5':[100,100]},
+
 'ماسه رده3':{'0.075':[2,5],'0.15':[10,20],'0.3':[15,40],'0.6':[30,60],'1.18':[45,80],'2.36':[65,100],'4.75':[90,100],'9.5':[100,100]},
 'شن رده 9':{'0.6':[0,5],'1.18':[0,10],'2.36':[10,40],'4.75':[85,100],'9.5':[100,100]},
 'شن رده 89':{'0.6':[0,5],'1.18':[0,10],'2.36':[5,30],'4.75':[20,55],'9.5':[90,100],'12.5':[100,100]},
@@ -301,14 +276,14 @@ function buildTable(){
 
   sieves.forEach(s=>{
     let tr=document.createElement('tr');
-    tr.innerHTML=`
+    tr.innerHTML=
       <td><b>${sieveLabels[s]||s}</b></td>
       <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
       <td id="ret-${s}">-</td>
       <td id="cum-${s}">-</td>
       <td id="pas-${s}">-</td>
       <td id="rng-${s}">-</td>
-      <td id="cmp-${s}">-</td>`;
+      <td id="cmp-${s}">-</td>;
     body.appendChild(tr);
   });
 
@@ -371,7 +346,7 @@ function calculate(){
   if(!Number.isFinite(total)||total<=0)
     return alert('وزن کل نمونه باید عددی مثبت باشد.');
 
-  if(!Number.isFinite(after)||after<=0||after>total)
+  if(!Number.isFinite(after)after<=0after>total)
     return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');
 
   if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0))
@@ -419,7 +394,7 @@ function calculate(){
   const acceptanceValid=diff<=tol&&!panMismatch;
 
   if(diff>tol)
-    warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
+    warnings.push(اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.);
 
   if(cat==='ریزدانه'&&Math.abs(fm-base)>.2)
     warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
@@ -453,41 +428,16 @@ function calculate(){
     weights,retained,cumulative,passing,passing200,fm,warnings,
     total,after,cls,cat,diff,tol,panMismatch,acceptanceValid
   };
-    // ================== بررسی وضعیت پرداخت ==================
-  // اگر کاربر قبلا خرید نکرده باشد
-  if (!isPurchased) {
-      if (!hasUsedFreeTrial) {
-          // اگر اولین بار است، اجازه بده نتیجه را ببیند و تیک رایگان را بزن
-          hasUsedFreeTrial = true;
-          localStorage.setItem('app_free_trial_used', 'true');
-          alert("شما از یک بار محاسبه رایگان خود استفاده کردید. برای محاسبات بعدی و خروجی PDF، لطفاً برنامه را خریداری کنید.");
-          
-          showUsageMessages();
-          drawChart();
-          return; // ادامه کد را متوقف نکن، بگذار کاربر نتیجه را ببیند
-      } else {
-          // اگر قبلا رایگان استفاده کرده، جلوی نمایش نتیجه را بگیر و پیام بده
-          // ابتدا نتایج قبلی را پاک کن تا کاربر فکر نکند این نتیجه جدید است
-          $('tvFm').textContent = '-';
-          $('tvPassing200').textContent = '-';
-          $('usageResults').innerHTML = '';
-          $('warnBox').textContent = '';
-          drawChart(); // نمودار خالی رسم شود
-          
-          showPaymentDialog();
-          return; // خروج از تابع بدون نمایش نتیجه
-      }
-  }
-  // =========================================================
 
-  showUsageMessages();
-  drawChart();
- }
   showUsageMessages();
   drawChart();
 }
 
-/* نمودار نیمه‌لگاریتمی */
+/* نمودار نیمه‌لگاریتمی:
+   محور از یک الک کوچک‌تر از کوچک‌ترین الک محدوده رده
+   تا یک الک بزرگ‌تر از بزرگ‌ترین الک محدوده رده رسم می‌شود.
+   اگر محدوده‌ای برای رده انتخاب‌شده وجود نداشته باشد،
+   کل دامنه الک‌ها رسم خواهد شد. */
 function drawChart(){
   const canvas=$('gradingChart');
   if(!canvas)return;
@@ -513,8 +463,10 @@ function drawChart(){
   const m={left:43,right:12,top:65,bottom:49};
   const ph=height-m.top-m.bottom;
 
+  /* اندازه الک‌ها از کوچک به بزرگ */
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
 
+  /* محدوده رده انتخاب‌شده */
   const selectedRange=ranges[$('spClass').value]||{};
 
   const rangeSizes=Object.keys(selectedRange)
@@ -525,7 +477,8 @@ function drawChart(){
   let axisMin;
   let axisMax;
 
-  if(rangeSizes.length>0){
+if(rangeSizes.length>0){
+    /* کوچک‌ترین الک محدوده و یک الک کوچک‌تر از آن */
     const minRangeSize=rangeSizes[0];
     const minIndex=ascending.indexOf(minRangeSize);
 
@@ -533,6 +486,7 @@ function drawChart(){
       ?ascending[minIndex-1]
       :ascending[0];
 
+    /* بزرگ‌ترین الک محدوده و یک الک بزرگ‌تر از آن */
     const maxRangeSize=rangeSizes[rangeSizes.length-1];
     const maxIndex=ascending.indexOf(maxRangeSize);
 
@@ -541,10 +495,12 @@ function drawChart(){
       :ascending[ascending.length-1];
 
   }else{
+    /* اگر محدوده استاندارد موجود نباشد، کل دانه‌بندی */
     axisMin=ascending[0];
     axisMax=ascending[ascending.length-1];
   }
 
+  /* اطمینان از معتبر بودن محدوده محور */
   if(!Number.isFinite(axisMin)||axisMin<=0)axisMin=ascending[0];
   if(!Number.isFinite(axisMax)||axisMax<=axisMin)axisMax=ascending[ascending.length-1];
 
@@ -556,6 +512,7 @@ function drawChart(){
   const logHigh=Math.log10(axisMax);
   const logSpan=logHigh-logLow;
 
+  /* تبدیل لگاریتمی اندازه الک به مختصات افقی */
   const x=value=>{
     const v=Number(value);
     if(!Number.isFinite(v)||v<=0)return NaN;
@@ -566,6 +523,7 @@ function drawChart(){
 
   const y=value=>m.top+(100-value)/100*ph;
 
+  /* خطوط افقی اصلی هر 10 درصد و فرعی هر 5 درصد */
   c.font='10px Arial';
   c.textBaseline='middle';
   c.textAlign='right';
@@ -588,6 +546,7 @@ function drawChart(){
     }
   }
 
+  /* خطوط عمودی اندازه الک‌ها */
   c.save();
   c.beginPath();
   c.rect(plotLeft,m.top,plotWidth,ph);
@@ -611,10 +570,12 @@ function drawChart(){
   c.restore();
   c.setLineDash([]);
 
+  /* کادر محدوده نمودار */
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.strokeRect(plotLeft,m.top,plotWidth,ph);
 
+  /* لیبل‌های نمره الک در یک ردیف و در محل واقعی خودشان */
   c.font='7px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
@@ -638,6 +599,7 @@ function drawChart(){
     c.stroke();
   });
 
+  /* رسم خطوط با محدودیت محور */
   function line(points,color,dash,lw){
     const validPoints=points.filter(([sx,sy])=>
       Number.isFinite(sx)&&
@@ -684,6 +646,7 @@ function drawChart(){
     c.setLineDash([]);
   }
 
+  /* خطوط حدود استاندارد رده انتخاب‌شده */
   const standardKeys=Object.keys(selectedRange)
     .map(Number)
     .filter(k=>k>=axisMin&&k<=axisMax)
@@ -699,9 +662,10 @@ function drawChart(){
     selectedRange[String(k)][1]
   ]);
 
-  line(lowerPoints,'#111',[],1.4);
+line(lowerPoints,'#111',[],1.4);
   line(upperPoints,'#111',[],1.4);
 
+  /* منحنی دانه‌بندی نمونه */
   if(lastResult&&lastResult.passing){
     const sample=ascending
       .filter(s=>s>=axisMin&&s<=axisMax)
@@ -717,6 +681,7 @@ function drawChart(){
 
     line(sample,'#dc0000',[5,4],2);
 
+    /* نمایش نقاط اندازه‌گیری‌شده */
     c.save();
     c.beginPath();
     c.rect(plotLeft,m.top,plotWidth,ph);
@@ -738,6 +703,7 @@ function drawChart(){
     c.restore();
   }
 
+  /* عناوین محورها */
   c.fillStyle='#243c5b';
   c.font='bold 11px Tahoma,Arial';
   c.textAlign='center';
@@ -752,21 +718,21 @@ function drawChart(){
   c.restore();
 }
 
-/* فقط دو جمله: «مجاز است» یا «ممنوع است» */
 function showUsageMessages(){
   const box=$('usageResults');
   box.replaceChildren();
 
   if(!lastResult)return;
 
-  function add(name,allowed){
+  function add(text,allowed,caution=false){
     const el=document.createElement('div');
-    el.className='usage-message '+(allowed?'allow':'deny');
-    el.textContent=`استفاده از این سنگدانه برای ${name} ${allowed?'مجاز است':'ممنوع است'}.`;
+    el.className='usage-message '+(caution?'caution':allowed?'allow':'deny');
+    el.textContent=text;
     box.appendChild(el);
   }
 
   if(!lastResult.acceptanceValid){
+    add('نتایج این آزمون برای اهداف پذیرش قابل قبول نمی‌باشد.',false,true);
     return;
   }
 
@@ -776,10 +742,12 @@ function showUsageMessages(){
   if(lastResult.cat==='درشت‌دانه'){
     const maxFine=crushed?1.5:1.0;
     const allowed=pct<=maxFine;
+    const limit=crushed?'۱٫۵٪ برای سنگدانه شکسته':'۱٪ برای سنگدانه گردگوشه/طبیعی';
+    const result=allowed?'مجاز است.':'مجاز نیست.';
 
-    add('بتن معمولی و بتن مسلح',allowed);
-    add('بتن تحت سایش',allowed);
-    add('بتن در معرض یخ‌زدگی و ذوب',allowed);
+    add(استفاده در بتن معمولی و بتن مسلح: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result},allowed);
+    add(استفاده در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result},allowed);
+    add(استفاده در بتن در معرض یخ‌زدگی و ذوب: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result},allowed);
     return;
   }
 
@@ -800,8 +768,15 @@ function showUsageMessages(){
 
   const ordinaryName=special?'بتن خودتراکم':'بتن معمولی';
 
-  add(ordinaryName,pct<=ordinaryMax);
-  add('بتن تحت سایش',pct<=abrasionMax);
+  add(
+    استفاده از سنگدانه ریز برای ${ordinaryName}: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=ordinaryMax?'مجاز است.':'مجاز نیست.'},
+    pct<=ordinaryMax
+  );
+
+  add(
+    استفاده از سنگدانه ریز در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=abrasionMax?'مجاز است.':'مجاز نیست.'},
+    pct<=abrasionMax
+  );
 }
 
 function resetAll(){
@@ -820,20 +795,51 @@ function safeText(v){
   }[ch]));
 }
 
-/* خروجی PDF با چاپ مستقیم مرورگر */
-function exportPDF(){
+function waitForPaint(){
+  return new Promise(resolve=>{
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(resolve);
+    });
+  });
+}
+
+async function exportPDF(){
   if(!lastResult){
     alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
     return;
   }
 
+  if(typeof window.html2pdf!=='function'){
+    alert('کتابخانه ساخت PDF بارگذاری نشده است.');
+    return;
+  }
+
+  if(!window.NativePDF){
+    alert('امکانات ذخیره و بازکردن PDF در برنامه بارگذاری نشده است. فایل native-pdf.bundle.js را بررسی کنید.');
+    return;
+  }
+
   const report=document.createElement('div');
+
   report.dir='rtl';
   report.lang='fa';
-  report.style.cssText=[
-    'position:fixed','inset:0','width:100%','padding:20px','margin:0',
-    'background:#ffffff','color:#172b43','font:14px Tahoma,Arial,sans-serif',
-    'direction:rtl','z-index:2147483647','overflow:auto'
+
+report.style.cssText=[
+    'position:fixed',
+    'left:0',
+    'top:0',
+    'width:1100px',
+    'max-width:none',
+    'padding:28px',
+    'margin:0',
+    'background:#ffffff',
+    'color:#172b43',
+    'font:14px Tahoma,Arial,sans-serif',
+    'direction:rtl',
+    'z-index:2147483647',
+    'opacity:1',
+    'visibility:visible',
+    'display:block'
   ].join(';');
 
   const title=document.createElement('div');
@@ -843,28 +849,33 @@ function exportPDF(){
 
   const meta=document.createElement('div');
   meta.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;font-size:13px;line-height:2;';
-  meta.innerHTML=`
+
+  meta.innerHTML=
     <div>نام شرکت: ${safeText($('company').value)}</div>
     <div>شماره نمونه: ${safeText($('sampleId').value)}</div>
     <div>تاریخ: ${safeText($('date').value)}</div>
     <div>نوع سنگدانه: ${safeText($('materialName').value)}</div>
     <div>کلاس: ${safeText(lastResult.cls)}</div>
     <div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>
-  `;
+  ;
+
   report.appendChild(meta);
 
   const table=document.createElement('table');
   table.style.cssText='width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;direction:rtl;';
+
   table.innerHTML='<thead><tr>'+
     ['نمره الک','وزن مانده (گرم)','مانده (%)','تجمعی (%)','عبوری (%)','محدوده مجاز','انطباق']
-      .map(t=>`<th style="background:#eaf2fb;border:1px solid #b9cce0;padding:7px">${t}</th>`)
+      .map(t=><th style="background:#eaf2fb;border:1px solid #b9cce0;padding:7px">${t}</th>)
       .join('')+
     '</tr></thead>';
 
   const tbody=document.createElement('tbody');
+
   for(const sieve of sieves){
     const row=document.createElement('tr');
     const range=ranges[lastResult.cls]?.[sieve];
+
     const values=[
       sieveLabels[sieve]||sieve,
       String(lastResult.weights[sieve]),
@@ -874,19 +885,25 @@ function exportPDF(){
       range?range.join(' - ')+'٪':'—',
       $('cmp-'+sieve).textContent
     ];
+
     row.innerHTML=values.map(v=>
-      `<td style="border:1px solid #d5e0eb;padding:6px;text-align:center">${safeText(v)}</td>`
+      <td style="border:1px solid #d5e0eb;padding:6px;text-align:center">${safeText(v)}</td>
     ).join('');
+
     tbody.appendChild(row);
   }
+
   table.appendChild(tbody);
   report.appendChild(table);
 
   const summary=document.createElement('div');
+
   summary.style.cssText='margin:10px 0;padding:12px;background:#f0f7ff;border:1px solid #d5e5f5;border-radius:8px;line-height:2';
+
   summary.textContent=
-    `مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | `+
-    `عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
+    مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | +
+    عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪;
+
   report.appendChild(summary);
 
   const chartTitle=document.createElement('h3');
@@ -909,18 +926,90 @@ function exportPDF(){
   footer.style.cssText='text-align:center;margin-top:20px;padding-top:10px;border-top:1px solid #d5e0eb;font-size:11px;color:#64748b;';
   report.appendChild(footer);
 
-  const originalBody=document.body.innerHTML;
-  document.body.innerHTML='';
   document.body.appendChild(report);
 
-  setTimeout(()=>{
-    window.print();
+  try{
+    await waitForPaint();
 
-    setTimeout(()=>{
-      document.body.innerHTML=originalBody;
-      location.reload();
-    },500);
-  },300);
+    if(chartImage.decode){
+      await chartImage.decode();
+    }
+
+const pdfBlob=await window.html2pdf()
+      .set({
+        margin:[8,8,8,8],
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{
+          scale:1.5,
+          useCORS:false,
+          backgroundColor:'#ffffff',
+          logging:false,
+          width:1100,
+          windowWidth:1100,
+          scrollX:0,
+          scrollY:0
+        },
+        jsPDF:{
+          unit:'mm',
+          format:'a4',
+          orientation:'landscape'
+        },
+        pagebreak:{mode:['css','legacy']}
+      })
+      .from(report)
+      .outputPdf('blob');
+
+    if(!pdfBlob || pdfBlob.size<1000){
+      throw new Error('فایل PDF تولیدشده خالی یا ناقص است.');
+    }
+
+    const base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+
+      reader.onload=()=>{
+        const result=String(reader.result||'');
+        const comma=result.indexOf(',');
+
+        if(comma<0){
+          reject(new Error('تبدیل PDF به Base64 ناموفق بود.'));
+          return;
+        }
+
+        resolve(result.slice(comma+1));
+      };
+
+      reader.onerror=()=>{
+        reject(reader.error||new Error('خطا در خواندن فایل PDF.'));
+      };
+
+      reader.readAsDataURL(pdfBlob);
+    });
+
+    const filename=Sieve-Analysis-${Date.now()}.pdf;
+
+    const saved=await window.NativePDF.Filesystem.writeFile({
+      path:filename,
+      data:base64,
+      directory:window.NativePDF.Directory.Cache,
+      recursive:true
+    });
+
+    if(!saved || !saved.uri){
+      throw new Error('ذخیره فایل PDF در حافظه دستگاه ناموفق بود.');
+    }
+
+    await window.NativePDF.FileOpener.open({
+      filePath:saved.uri,
+      contentType:'application/pdf',
+      openWithDefault:true
+    });
+
+  }catch(error){
+    console.error('PDF export error:',error);
+    alert('ساخت یا بازکردن PDF با خطا مواجه شد: '+(error?.message||error));
+  }finally{
+    report.remove();
+  }
 }
 
 $('spClass').addEventListener('change',updateRanges);
