@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -208,9 +207,6 @@ button:hover{filter:brightness(1.09)}
     <canvas id="gradingChart" role="img" aria-label="نمودار نیمه لگاریتمی اندازه الک و درصد عبوری"></canvas>
   </div>
 </div>
-
-<script src="./html2pdf.bundle.min.js"></script>
-<script type="module" src="./native-pdf.bundle.js"></script>
 
 <script>
 'use strict';
@@ -431,11 +427,7 @@ function calculate(){
   drawChart();
 }
 
-/* نمودار نیمه‌لگاریتمی:
-   محور از یک الک کوچک‌تر از کوچک‌ترین الک محدوده رده
-   تا یک الک بزرگ‌تر از بزرگ‌ترین الک محدوده رده رسم می‌شود.
-   اگر محدوده‌ای برای رده انتخاب‌شده وجود نداشته باشد،
-   کل دامنه الک‌ها رسم خواهد شد. */
+/* نمودار نیمه‌لگاریتمی */
 function drawChart(){
   const canvas=$('gradingChart');
   if(!canvas)return;
@@ -461,10 +453,8 @@ function drawChart(){
   const m={left:43,right:12,top:65,bottom:49};
   const ph=height-m.top-m.bottom;
 
-  /* اندازه الک‌ها از کوچک به بزرگ */
   const ascending=sieves.map(Number).sort((a,b)=>a-b);
 
-  /* محدوده رده انتخاب‌شده */
   const selectedRange=ranges[$('spClass').value]||{};
 
   const rangeSizes=Object.keys(selectedRange)
@@ -476,7 +466,6 @@ function drawChart(){
   let axisMax;
 
   if(rangeSizes.length>0){
-    /* کوچک‌ترین الک محدوده و یک الک کوچک‌تر از آن */
     const minRangeSize=rangeSizes[0];
     const minIndex=ascending.indexOf(minRangeSize);
 
@@ -484,7 +473,6 @@ function drawChart(){
       ?ascending[minIndex-1]
       :ascending[0];
 
-    /* بزرگ‌ترین الک محدوده و یک الک بزرگ‌تر از آن */
     const maxRangeSize=rangeSizes[rangeSizes.length-1];
     const maxIndex=ascending.indexOf(maxRangeSize);
 
@@ -493,12 +481,10 @@ function drawChart(){
       :ascending[ascending.length-1];
 
   }else{
-    /* اگر محدوده استاندارد موجود نباشد، کل دانه‌بندی */
     axisMin=ascending[0];
     axisMax=ascending[ascending.length-1];
   }
 
-  /* اطمینان از معتبر بودن محدوده محور */
   if(!Number.isFinite(axisMin)||axisMin<=0)axisMin=ascending[0];
   if(!Number.isFinite(axisMax)||axisMax<=axisMin)axisMax=ascending[ascending.length-1];
 
@@ -510,7 +496,6 @@ function drawChart(){
   const logHigh=Math.log10(axisMax);
   const logSpan=logHigh-logLow;
 
-  /* تبدیل لگاریتمی اندازه الک به مختصات افقی */
   const x=value=>{
     const v=Number(value);
     if(!Number.isFinite(v)||v<=0)return NaN;
@@ -521,7 +506,6 @@ function drawChart(){
 
   const y=value=>m.top+(100-value)/100*ph;
 
-  /* خطوط افقی اصلی هر 10 درصد و فرعی هر 5 درصد */
   c.font='10px Arial';
   c.textBaseline='middle';
   c.textAlign='right';
@@ -544,7 +528,6 @@ function drawChart(){
     }
   }
 
-  /* خطوط عمودی اندازه الک‌ها */
   c.save();
   c.beginPath();
   c.rect(plotLeft,m.top,plotWidth,ph);
@@ -568,12 +551,10 @@ function drawChart(){
   c.restore();
   c.setLineDash([]);
 
-  /* کادر محدوده نمودار */
   c.strokeStyle='#26374d';
   c.lineWidth=1;
   c.strokeRect(plotLeft,m.top,plotWidth,ph);
 
-  /* لیبل‌های نمره الک در یک ردیف و در محل واقعی خودشان */
   c.font='7px Arial';
   c.textAlign='center';
   c.textBaseline='middle';
@@ -597,7 +578,6 @@ function drawChart(){
     c.stroke();
   });
 
-  /* رسم خطوط با محدودیت محور */
   function line(points,color,dash,lw){
     const validPoints=points.filter(([sx,sy])=>
       Number.isFinite(sx)&&
@@ -644,7 +624,6 @@ function drawChart(){
     c.setLineDash([]);
   }
 
-  /* خطوط حدود استاندارد رده انتخاب‌شده */
   const standardKeys=Object.keys(selectedRange)
     .map(Number)
     .filter(k=>k>=axisMin&&k<=axisMax)
@@ -663,7 +642,6 @@ function drawChart(){
   line(lowerPoints,'#111',[],1.4);
   line(upperPoints,'#111',[],1.4);
 
-  /* منحنی دانه‌بندی نمونه */
   if(lastResult&&lastResult.passing){
     const sample=ascending
       .filter(s=>s>=axisMin&&s<=axisMax)
@@ -679,7 +657,6 @@ function drawChart(){
 
     line(sample,'#dc0000',[5,4],2);
 
-    /* نمایش نقاط اندازه‌گیری‌شده */
     c.save();
     c.beginPath();
     c.rect(plotLeft,m.top,plotWidth,ph);
@@ -701,7 +678,6 @@ function drawChart(){
     c.restore();
   }
 
-  /* عناوین محورها */
   c.fillStyle='#243c5b';
   c.font='bold 11px Tahoma,Arial';
   c.textAlign='center';
@@ -716,21 +692,21 @@ function drawChart(){
   c.restore();
 }
 
+/* فقط دو جمله: «مجاز است» یا «ممنوع است» */
 function showUsageMessages(){
   const box=$('usageResults');
   box.replaceChildren();
 
   if(!lastResult)return;
 
-  function add(text,allowed,caution=false){
+  function add(name,allowed){
     const el=document.createElement('div');
-    el.className='usage-message '+(caution?'caution':allowed?'allow':'deny');
-    el.textContent=text;
+    el.className='usage-message '+(allowed?'allow':'deny');
+    el.textContent=`استفاده از این سنگدانه برای ${name} ${allowed?'مجاز است':'ممنوع است'}.`;
     box.appendChild(el);
   }
 
   if(!lastResult.acceptanceValid){
-    add('نتایج این آزمون برای اهداف پذیرش قابل قبول نمی‌باشد.',false,true);
     return;
   }
 
@@ -740,12 +716,10 @@ function showUsageMessages(){
   if(lastResult.cat==='درشت‌دانه'){
     const maxFine=crushed?1.5:1.0;
     const allowed=pct<=maxFine;
-    const limit=crushed?'۱٫۵٪ برای سنگدانه شکسته':'۱٪ برای سنگدانه گردگوشه/طبیعی';
-    const result=allowed?'مجاز است.':'مجاز نیست.';
 
-    add(`استفاده در بتن معمولی و بتن مسلح: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
-    add(`استفاده در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
-    add(`استفاده در بتن در معرض یخ‌زدگی و ذوب: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ حد مجاز ${limit}، بنابراین ${result}`,allowed);
+    add('بتن معمولی و بتن مسلح',allowed);
+    add('بتن تحت سایش',allowed);
+    add('بتن در معرض یخ‌زدگی و ذوب',allowed);
     return;
   }
 
@@ -766,15 +740,8 @@ function showUsageMessages(){
 
   const ordinaryName=special?'بتن خودتراکم':'بتن معمولی';
 
-  add(
-    `استفاده از سنگدانه ریز برای ${ordinaryName}: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=ordinaryMax?'مجاز است.':'مجاز نیست.'}`,
-    pct<=ordinaryMax
-  );
-
-  add(
-    `استفاده از سنگدانه ریز در بتن تحت سایش: عبوری الک ۰٫۰۷۵ برابر ${pct.toFixed(2)}٪ است؛ ${pct<=abrasionMax?'مجاز است.':'مجاز نیست.'}`,
-    pct<=abrasionMax
-  );
+  add(ordinaryName,pct<=ordinaryMax);
+  add('بتن تحت سایش',pct<=abrasionMax);
 }
 
 function resetAll(){
@@ -793,51 +760,20 @@ function safeText(v){
   }[ch]));
 }
 
-function waitForPaint(){
-  return new Promise(resolve=>{
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(resolve);
-    });
-  });
-}
-
-async function exportPDF(){
+/* خروجی PDF با چاپ مستقیم مرورگر */
+function exportPDF(){
   if(!lastResult){
     alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
     return;
   }
 
-  if(typeof window.html2pdf!=='function'){
-    alert('کتابخانه ساخت PDF بارگذاری نشده است.');
-    return;
-  }
-
-  if(!window.NativePDF){
-    alert('امکانات ذخیره و بازکردن PDF در برنامه بارگذاری نشده است. فایل native-pdf.bundle.js را بررسی کنید.');
-    return;
-  }
-
   const report=document.createElement('div');
-
   report.dir='rtl';
   report.lang='fa';
-
   report.style.cssText=[
-    'position:fixed',
-    'left:0',
-    'top:0',
-    'width:1100px',
-    'max-width:none',
-    'padding:28px',
-    'margin:0',
-    'background:#ffffff',
-    'color:#172b43',
-    'font:14px Tahoma,Arial,sans-serif',
-    'direction:rtl',
-    'z-index:2147483647',
-    'opacity:1',
-    'visibility:visible',
-    'display:block'
+    'position:fixed','inset:0','width:100%','padding:20px','margin:0',
+    'background:#ffffff','color:#172b43','font:14px Tahoma,Arial,sans-serif',
+    'direction:rtl','z-index:2147483647','overflow:auto'
   ].join(';');
 
   const title=document.createElement('div');
@@ -847,7 +783,6 @@ async function exportPDF(){
 
   const meta=document.createElement('div');
   meta.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;font-size:13px;line-height:2;';
-
   meta.innerHTML=`
     <div>نام شرکت: ${safeText($('company').value)}</div>
     <div>شماره نمونه: ${safeText($('sampleId').value)}</div>
@@ -856,12 +791,10 @@ async function exportPDF(){
     <div>کلاس: ${safeText(lastResult.cls)}</div>
     <div>وزن کل: ${lastResult.total} گرم | پس از شستشو: ${lastResult.after} گرم</div>
   `;
-
   report.appendChild(meta);
 
   const table=document.createElement('table');
   table.style.cssText='width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;direction:rtl;';
-
   table.innerHTML='<thead><tr>'+
     ['نمره الک','وزن مانده (گرم)','مانده (%)','تجمعی (%)','عبوری (%)','محدوده مجاز','انطباق']
       .map(t=>`<th style="background:#eaf2fb;border:1px solid #b9cce0;padding:7px">${t}</th>`)
@@ -869,11 +802,9 @@ async function exportPDF(){
     '</tr></thead>';
 
   const tbody=document.createElement('tbody');
-
   for(const sieve of sieves){
     const row=document.createElement('tr');
     const range=ranges[lastResult.cls]?.[sieve];
-
     const values=[
       sieveLabels[sieve]||sieve,
       String(lastResult.weights[sieve]),
@@ -883,25 +814,19 @@ async function exportPDF(){
       range?range.join(' - ')+'٪':'—',
       $('cmp-'+sieve).textContent
     ];
-
     row.innerHTML=values.map(v=>
       `<td style="border:1px solid #d5e0eb;padding:6px;text-align:center">${safeText(v)}</td>`
     ).join('');
-
     tbody.appendChild(row);
   }
-
   table.appendChild(tbody);
   report.appendChild(table);
 
   const summary=document.createElement('div');
-
   summary.style.cssText='margin:10px 0;padding:12px;background:#f0f7ff;border:1px solid #d5e5f5;border-radius:8px;line-height:2';
-
   summary.textContent=
     `مدول نرمی: ${lastResult.cat==='ریزدانه'?lastResult.fm.toFixed(2):'—'} | `+
     `عبوری الک ۰٫۰۷۵ میلی‌متر: ${lastResult.passing200.toFixed(2)}٪`;
-
   report.appendChild(summary);
 
   const chartTitle=document.createElement('h3');
@@ -924,90 +849,18 @@ async function exportPDF(){
   footer.style.cssText='text-align:center;margin-top:20px;padding-top:10px;border-top:1px solid #d5e0eb;font-size:11px;color:#64748b;';
   report.appendChild(footer);
 
+  const originalBody=document.body.innerHTML;
+  document.body.innerHTML='';
   document.body.appendChild(report);
 
-  try{
-    await waitForPaint();
+  setTimeout(()=>{
+    window.print();
 
-    if(chartImage.decode){
-      await chartImage.decode();
-    }
-
-    const pdfBlob=await window.html2pdf()
-      .set({
-        margin:[8,8,8,8],
-        image:{type:'jpeg',quality:0.98},
-        html2canvas:{
-          scale:1.5,
-          useCORS:false,
-          backgroundColor:'#ffffff',
-          logging:false,
-          width:1100,
-          windowWidth:1100,
-          scrollX:0,
-          scrollY:0
-        },
-        jsPDF:{
-          unit:'mm',
-          format:'a4',
-          orientation:'landscape'
-        },
-        pagebreak:{mode:['css','legacy']}
-      })
-      .from(report)
-      .outputPdf('blob');
-
-    if(!pdfBlob || pdfBlob.size<1000){
-      throw new Error('فایل PDF تولیدشده خالی یا ناقص است.');
-    }
-
-    const base64=await new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-
-      reader.onload=()=>{
-        const result=String(reader.result||'');
-        const comma=result.indexOf(',');
-
-        if(comma<0){
-          reject(new Error('تبدیل PDF به Base64 ناموفق بود.'));
-          return;
-        }
-
-        resolve(result.slice(comma+1));
-      };
-
-      reader.onerror=()=>{
-        reject(reader.error||new Error('خطا در خواندن فایل PDF.'));
-      };
-
-      reader.readAsDataURL(pdfBlob);
-    });
-
-    const filename=`Sieve-Analysis-${Date.now()}.pdf`;
-
-    const saved=await window.NativePDF.Filesystem.writeFile({
-      path:filename,
-      data:base64,
-      directory:window.NativePDF.Directory.Cache,
-      recursive:true
-    });
-
-    if(!saved || !saved.uri){
-      throw new Error('ذخیره فایل PDF در حافظه دستگاه ناموفق بود.');
-    }
-
-    await window.NativePDF.FileOpener.open({
-      filePath:saved.uri,
-      contentType:'application/pdf',
-      openWithDefault:true
-    });
-
-  }catch(error){
-    console.error('PDF export error:',error);
-    alert('ساخت یا بازکردن PDF با خطا مواجه شد: '+(error?.message||error));
-  }finally{
-    report.remove();
-  }
+    setTimeout(()=>{
+      document.body.innerHTML=originalBody;
+      location.reload();
+    },500);
+  },300);
 }
 
 $('spClass').addEventListener('change',updateRanges);
