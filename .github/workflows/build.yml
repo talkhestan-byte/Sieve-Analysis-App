@@ -26,12 +26,16 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'   # ← اینجا حتماً باید 21 باشد
+          java-version: '21'
 
       - name: Prepare web app
         run: |
           set -eu
+          
+          # 1. بررسی وجود فایل اصلی
           test -s www/index.html
+          
+          # 2. راه‌اندازی npm و نصب پکیج‌ها
           npm init -y
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6 typescript esbuild
@@ -40,21 +44,22 @@ jobs:
           npm install @capacitor-community/file-opener@6.0.1
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
+
+          # 3. باندل کردن فایل native-pdf.js (اگر وجود داشته باشد)
           if [ -f www/native-pdf.js ]; then
-          npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
+            npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
           fi
+
+          # 4. کپی کتابخانه‌های جانبی
           if [ -d "node_modules/html2pdf.js/dist" ]; then
-          cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
+            cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
 
-          # ============================================
-          # کپی کردن آیکون‌ها (اگر در پوشه assets باشند)
-          # ============================================
-          # این کار در مرحله Configure Capacitor انجام می‌شود
-
-      - name: Configure Capacitor
+      - name: Configure Capacitor & Apply Icons
         run: |
           set -eu
+
+          # 1. ساخت فایل تنظیمات کپسیتور
           rm -f capacitor.config.ts capacitor.config.json
           cat > capacitor.config.json <<'EOF'
           {
@@ -63,15 +68,47 @@ jobs:
             "webDir": "www"
           }
           EOF
+
+          # 2. ساخت پروژه اندروید و سینک
           npx cap add android
           npx cap sync android
-          
+
+          # 3. اضافه کردن مخزن JitPack برای پلاگین کافه‌بازار
           PROJECT_GRADLE="android/build.gradle"
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
             sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
-          echo "--- Checking JitPack injection ---"
-          grep -A 5 "allprojects" "$PROJECT_GRADLE" || true
+          echo "JitPack repository injected."
+
+          # 4. اعمال آیکون‌های سفارشی از پوشه assets
+          echo "Applying custom icons..."
+          if [ -d "assets" ]; then
+            # آیکون پایه (Legacy)
+            if [ -f "assets/icon-only.png" ]; then
+              cp "assets/icon-only.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+              cp "assets/icon-only.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+            fi
+            
+            # آیکون‌های Adaptive (اندروید 8 به بالا)
+            mkdir -p android/app/src/main/res/mipmap-anydpi-v26/
+            cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@mipmap/ic_launcher_background" />
+              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+            if [ -f "assets/icon-background.png" ]; then
+              cp "assets/icon-background.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png
+            fi
+            if [ -f "assets/icon-foreground.png" ]; then
+              cp "assets/icon-foreground.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+            fi
+            echo "Icons applied successfully."
+          else
+            echo "Warning: assets folder not found. Using default Capacitor icon."
+          fi
 
       - name: Build Debug APK
         run: |
