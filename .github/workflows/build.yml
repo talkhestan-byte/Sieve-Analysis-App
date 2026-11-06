@@ -26,37 +26,23 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'   # ← اینجا حتماً باید 21 باشد
 
       - name: Prepare web app
         run: |
           set -eu
-          
-          # 1. اطمینان از وجود فایل HTML
           test -s www/index.html
-          
-          # 2. ساخت فایل package.json اولیه
           npm init -y
-
-          # 3. نصب همه پکیج‌های کپسیتور و پلاگین‌ها (قبل از باندل کردن)
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6 typescript esbuild
-          
-          # نصب پلاگین پرداخت کافه‌بازار
           npm install @salarizadi/capacitor-cafebazaar-poolakey
-
-          # نصب پلاگین‌های مورد نیاز فایل native-pdf.js
           npm install @capacitor/filesystem@6
           npm install @capacitor-community/file-opener@6.0.1
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
-
-          # 4. حالا که پکیج‌ها نصب شدند، فایل native-pdf.js را باندل می‌کنیم
           if [ -f www/native-pdf.js ]; then
             npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
           fi
-
-          # 5. کپی کتابخانه‌های جانبی به پوشه www
           if [ -d "node_modules/html2pdf.js/dist" ]; then
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
@@ -64,50 +50,42 @@ jobs:
       - name: Configure Capacitor
         run: |
           set -eu
-
-          # ساخت فایل تنظیمات کپسیتور
           rm -f capacitor.config.ts capacitor.config.json
-
           cat > capacitor.config.json <<'EOF'
           {
-          "appId": "com.yourname.sieveanalysis",
-          "appName": "Sieve Analysis",
-          "webDir": "www"
+            "appId": "com.yourname.sieveanalysis",
+            "appName": "Sieve Analysis",
+            "webDir": "www"
           }
           EOF
-
           npx cap add android
           npx cap sync android
-
-          # ============================================
-          # اضافه کردن مخزن JitPack به پروژه اندروید
-          # ============================================
-          # این کار برای پیدا کردن کتابخانه Poolakey ضروری است
+          
           PROJECT_GRADLE="android/build.gradle"
-    
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
-          # پیدا کردن خط allprojects و اضافه کردن JitPack بعد از repositories
-          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+            sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
-    
-          # نمایش بخش related برای اطمینان از اعمال تغییر
-          echo "--- Checking JitPack injection in android/build.gradle ---"
+          echo "--- Checking JitPack injection ---"
           grep -A 5 "allprojects" "$PROJECT_GRADLE" || true
+
+      - name: Build Debug APK
+        run: |
+          set -eu
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          cd ..
+          mkdir -p output
+          cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
 
       - name: Restore persistent signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
         run: |
           set -eu
-
-          test -n "$KEYSTORE_BASE64" || {
-            echo "Missing SIGNING_KEYSTORE_BASE64 secret"
-            exit 1
-          }
-
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
-            > android/app/release-key.jks
-
+          test -n "$KEYSTORE_BASE64" || { echo "Missing SIGNING_KEYSTORE_BASE64 secret"; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
           test -s android/app/release-key.jks
 
       - name: Configure release signing
@@ -117,11 +95,9 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           set -eu
-
           test -n "$SIGNING_STORE_PASSWORD"
           test -n "$SIGNING_KEY_ALIAS"
           test -n "$SIGNING_KEY_PASSWORD"
-
           cat > android/app/signing.gradle <<'EOF'
           android {
               signingConfigs {
@@ -132,7 +108,6 @@ jobs:
                       keyPassword System.getenv("SIGNING_KEY_PASSWORD")
                   }
               }
-
               buildTypes {
                   release {
                       signingConfig signingConfigs.release
@@ -140,13 +115,10 @@ jobs:
               }
           }
           EOF
-
           if ! grep -q "signing.gradle" android/app/build.gradle; then
             echo "" >> android/app/build.gradle
             echo "apply from: 'signing.gradle'" >> android/app/build.gradle
           fi
-
-          echo "Release signing configuration created."
 
       - name: Build signed release AAB
         env:
@@ -155,23 +127,18 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           set -eu
-
           cd android
           ./gradlew bundleRelease
           test -s app/build/outputs/bundle/release/app-release.aab
-
           cd ..
-          cp android/app/build/outputs/bundle/release/app-release.aab \
-            output/Sieve-Analysis.aab
+          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
 
       - name: Download official Cafe Bazaar Bundle Signer
         run: |
           set -eu
-
           curl --fail --location --silent --show-error \
             https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
             --output bundlesigner.jar
-
           test -s bundlesigner.jar
 
       - name: Generate Cafe Bazaar BIN
@@ -181,7 +148,6 @@ jobs:
           KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
           set -eu
-
           java -jar bundlesigner.jar genbin \
             --verbose \
             --bundle android/app/build/outputs/bundle/release/app-release.aab \
@@ -193,10 +159,6 @@ jobs:
             --ks-key-alias "$KEY_ALIAS" \
             --ks-pass "env:KS_PASS" \
             --key-pass "env:KEY_PASS"
-
-          echo "Generated files:"
-          find output -maxdepth 1 -type f -printf '%f\n'
-
           test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
           test -s output/Sieve-Analysis.aab
           test -s output/Sieve-Analysis-debug.apk
