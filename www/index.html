@@ -340,12 +340,34 @@ function invalidate(){
 
 function toggleCategoryFields(){
   const fine=$('materialCategory').value==='ریزدانه';
-  $('baseModulusField').style.display=fine?'flex':'none';
+  $('baseModulusField').style.display='flex';
   const cls=$('spClass');
   const old=cls.value;
   cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';
   Object.keys(ranges).filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن')).forEach(k=>cls.add(new Option(k,k)));
   if([...cls.options].some(o=>o.value===old))cls.value=old;
+  
+  // تغییر فیلد مدول نرمی به فیلد عبوری الک ۲۰۰ برای درشت‌دانه
+  const baseLabel = document.querySelector('#baseModulusField label');
+  const baseInput = $('baseModulus');
+  if (fine) {
+    baseLabel.textContent = 'مدول نرمی مبنا';
+    baseInput.readOnly = false;
+    baseInput.style.background = '';
+    baseInput.value = baseInput.dataset.fmValue || '2.90';
+    baseInput.removeAttribute('data-org');
+  } else {
+    baseLabel.textContent = 'عبوری از الک ۲۰۰ (%)';
+    baseInput.readOnly = true;
+    baseInput.style.background = '#f1f5f9';
+    baseInput.removeAttribute('data-fmValue');
+    if (lastResult && Number.isFinite(lastResult.passing200)) {
+      baseInput.value = lastResult.passing200.toFixed(2);
+    } else {
+      baseInput.value = '';
+    }
+  }
+  
   updateRanges();
 }
 
@@ -473,6 +495,13 @@ function calculate(){
   $('tvFm').textContent=cat==='ریزدانه' && !isNaN(fm) ? fm.toFixed(2) : '-';
   $('tvPassing200').textContent=total > 0 ? passing200.toFixed(2)+'%' : '-';
 
+  // بروزرسانی فیلد غیرقابل ویرایش عبوری الک ۲۰۰ برای درشت‌دانه
+  if (cat !== 'ریزدانه') {
+    $('baseModulus').value = passing200.toFixed(2);
+  } else {
+    $('baseModulus').dataset.fmValue = base.toFixed(2);
+  }
+
   // ================== منطق نمایش هشدارها و جملات ==================
   const box = $('usageResults');
   box.replaceChildren(); 
@@ -525,6 +554,17 @@ function calculate(){
       add('بتن مسلح و معمولی', pct <= maxNormal);
       add('بتن تحت شرایط ذوب و یخبندان', pct <= maxNormal);
       add('بتن تحت سایش', pct <= maxAbrasion);
+
+      // ================== جملات شرطی برای درشت‌دانه ==================
+      if (cat === 'درشت‌دانه') {
+          const maxGravel200 = isCrushed ? 1.5 : 1.0;
+          const allowed200 = passing200 <= maxGravel200 + 1e-8;
+          const msg = document.createElement('div');
+          msg.className = 'usage-message ' + (allowed200 ? 'allow' : 'deny');
+          msg.textContent = `این سنگدانه برای استفاده در بتن‌های مسلح و معمولی با توجه به درصد عبوری از الک ۲۰۰ ${allowed200 ? 'مجاز است' : 'ممنوع است'} (حداکثر ${isCrushed ? '۱٫۵' : '۱٫۰'} درصد).`;
+          box.appendChild(msg);
+      }
+      // ========================================================
   }
   // =======================================================
 
@@ -676,6 +716,7 @@ $('materialName').addEventListener('change',invalidate);
 ['totalWeight','afterWash','baseModulus'].forEach(id=>{
   $(id).addEventListener('input',()=>{
     const el=$(id);
+    if (el.readOnly) return;
     const v=cleanNumeric(el.value);
     if(el.value!==v)el.value=v;
     invalidate();
@@ -781,6 +822,13 @@ function buildPrintHTML() {
         </div>`;
     }
 
+    // آیتم مدول نرمی / عبوری الک ۲۰۰ برای برگه چاپ
+    const isFine = lastResult.cat === 'ریزدانه';
+    const modulusOrPassing200HTML = isFine
+        ? `<span class="value">${$('baseModulus').value || '—'} / ${lastResult.fm.toFixed(2)}</span>`
+        : `<span class="value">${lastResult.passing200.toFixed(2)}%</span>`;
+    const modulusLabel = isFine ? 'مدول نرمی مبنا / محاسبه' : 'عبوری از الک ۲۰۰';
+
     return `
         <!DOCTYPE html>
         <html dir="rtl" lang="fa">
@@ -865,7 +913,7 @@ function buildPrintHTML() {
                     <div class="info-item"><span class="label">رده دانه بندی</span><span class="value">${lastResult.cls}</span></div>
                     <div class="info-item"><span class="label">وزن کل (gr)</span><span class="value">${lastResult.total}</span></div>
                     <div class="info-item"><span class="label">وزن بعد از شستشو (gr)</span><span class="value">${lastResult.after}</span></div>
-                    <div class="info-item"><span class="label">مدول نرمی مبنا / محاسبه</span><span class="value">${$('baseModulus').value || '—'} / ${lastResult.cat==='ریزدانه' ? lastResult.fm.toFixed(2) : '—'}</span></div>
+                    <div class="info-item"><span class="label">${modulusLabel}</span>${modulusOrPassing200HTML}</div>
                 </div>
 
                 <table>
