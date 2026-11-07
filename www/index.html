@@ -759,15 +759,16 @@ function buildPrintHTML() {
         
         const statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
 
+        // ارتفاع جدول کمتر (پدینگ کمتر)، عرض بیشتر (پدینگ افقی بیشتر)
         tableHTML += `
             <tr>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${lastResult.weights[s]}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${ret}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${cum}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold;">${pas}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${rangeTxt}</td>
-                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; color:${statusColor}; font-weight:bold;">${status}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center;">${lastResult.weights[s]}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center;">${ret}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center;">${cum}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center; font-weight:bold;">${pas}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center;">${rangeTxt}</td>
+                <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center; color:${statusColor}; font-weight:bold;">${status}</td>
             </tr>
         `;
     }
@@ -833,7 +834,6 @@ function buildPrintHTML() {
                     border-radius: 6px;
                     padding: 8px;
                     margin-bottom: 8px;
-                    /* دو برابر کردن ابعاد گراف */
                     flex-grow: 2; 
                     background: linear-gradient(145deg, #f4f9ff, #e6f0fa); 
                     box-shadow: inset 0 0 10px rgba(0, 103, 192, 0.05);
@@ -863,7 +863,7 @@ function buildPrintHTML() {
                     <div class="info-item"><span class="label">رده دانه بندی</span><span class="value">${lastResult.cls}</span></div>
                     <div class="info-item"><span class="label">وزن کل (gr)</span><span class="value">${lastResult.total}</span></div>
                     <div class="info-item"><span class="label">وزن بعد از شستشو (gr)</span><span class="value">${lastResult.after}</span></div>
-                    <div class="info-item"><span class="label">مدول نرمی مبنا</span><span class="value">${$('baseModulus').value || '—'}</span></div>
+                    <div class="info-item"><span class="label">مدول نرمی مبنا / محاسبه</span><span class="value">${$('baseModulus').value || '—'} / ${lastResult.cat==='ریزدانه' ? lastResult.fm.toFixed(2) : '—'}</span></div>
                 </div>
 
                 <table>
