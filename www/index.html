@@ -203,8 +203,8 @@ const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
 const PRODUCT_ID = 'full_version_unlock'; 
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
-let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 7);
-const MAX_FREE_TRIAL = 7;
+let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
+const MAX_FREE_TRIAL = 10;
 
 async function initBazaarPayment() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
@@ -278,8 +278,8 @@ const ranges={
 const sieveLabels={
 '0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30',
 '1.18':'#16','2.36':'#8','4.75':'#4','9.5':'3/8″',
-'12.5':'1/2″','19':'3/4″','25':'1″','37.5':'½1″',
-'50':'2″','63':'½2″','75':'3″','90':'½3″','100':'4″'
+'12.5':'1/2″','19':'3/4″','25':'1″','37.5':'1½″',
+'50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'
 };
 
 const $=id=>document.getElementById(id);
@@ -505,7 +505,7 @@ function calculate(){
           freeTrialCount++;
           localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
           if (freeTrialCount === MAX_FREE_TRIAL) {
-            alert("شما از ۷ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+            alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
           }
           drawChart();
           return;
@@ -654,31 +654,180 @@ window.addEventListener('resize',drawChart);
 buildTable();
 toggleCategoryFields();
 document.addEventListener('DOMContentLoaded', initBazaarPayment);
-// ================== چاپ بومی اندروید ==================
+
+// ================== چاپ بومی اندروید و طراحی برگه ==================
 async function exportPDF() {
+    if (!lastResult) {
+        alert("ابتدا دکمه محاسبه را بزنید.");
+        return;
+    }
+
     try {
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-            // استفاده از پلاگین سازگار با Capacitor 6
             const { Printer } = window.Capacitor.Plugins;
             if (Printer) {
-                // این پلاگین به جای printWebView از print با محتوای HTML استفاده می‌کند
-                const content = document.body.innerHTML;
-                await Printer.print({
-                    content: content,
-                    name: 'گزارش آزمایش دانه بندی سنگدانه'
-                });
+                // ساخت قالب HTML اختصاصی برای چاپ
+                const printHTML = buildPrintHTML();
+                await Printer.print({ content: printHTML, name: 'گزارش دانه بندی' });
             } else {
-                window.print();
+                alert('پلاگین چاپ پیدا نشد.');
             }
         } else {
             window.print();
         }
     } catch (error) {
-        console.error('PDF Error:', error);
+        console.error(error);
         alert('خطا در ایجاد خروجی PDF. لطفاً دوباره تلاش کنید.');
     }
 }
-// =======================================================  
+
+function buildPrintHTML() {
+    // گرفتن عکس از نمودار
+    const chartDataUrl = $('gradingChart').toDataURL('image/png');
+
+    // جدول
+    let tableHTML = '';
+    for(const s of sieves) {
+        if(lastResult.weights[s] === null) continue; // فقط الک‌های وارد شده
+        const r = ranges[lastResult.cls]?.[s];
+        const ret = lastResult.retained[s] !== null ? lastResult.retained[s].toFixed(1) : '-';
+        const cum = lastResult.cumulative[s] !== null ? lastResult.cumulative[s].toFixed(1) : '-';
+        const pas = lastResult.passing[s] !== null ? lastResult.passing[s].toFixed(1) : '-';
+        const rangeTxt = r ? r.join(' - ') + '٪' : '—';
+        const status = $('cmp-'+s).textContent;
+
+        let statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
+
+        tableHTML += `
+            <tr>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${lastResult.weights[s]}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${ret}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${cum}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; font-weight:bold;">${pas}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${rangeTxt}</td>
+                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; color:${statusColor}; font-weight:bold;">${status}</td>
+            </tr>
+        `;
+    }
+
+    // جملات شرطی
+    let messagesHTML = '';
+    const usageBox = $('usageResults');
+    if (usageBox.innerHTML.trim() !== '') {
+        messagesHTML = `<div style="margin-top: 20px; padding: 15px; border: 2px dashed #b8d2ee; border-radius: 8px; background: #f8fafc;">
+            ${usageBox.innerHTML}
+        </div>`;
+    }
+
+    return `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="fa">
+        <head>
+            <meta charset="UTF-8">
+            <title>گزارش دانه بندی</title>
+            <style>
+                @page { size: A4 portrait; margin: 10mm; }
+                body { font-family: Tahoma, Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; direction: rtl; }
+                .page {
+                    border: 3px solid #124a9c;
+                    border-radius: 12px;
+                    padding: 20px;
+                    min-height: 95vh;
+                    background: #fff;
+                    box-shadow: inset 0 0 15px rgba(0, 103, 192, 0.1);
+                }
+                .header-title {
+                    text-align: center;
+                    color: #124a9c;
+                    border-bottom: 2px solid #b9d6f4;
+                    padding-bottom: 15px;
+                    margin-bottom: 20px;
+                }
+                .header-title h1 { margin: 0; font-size: 22px; }
+                .header-title h2 { margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: normal; }
+                
+                .info-box {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 10px;
+                    background: #f0f7ff;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 25px;
+                    font-size: 12px;
+                }
+                .info-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                .info-item .label { color: #64748b; font-weight: bold; font-size: 11px; }
+                .info-item .value { font-weight: bold; color: #0f172a; font-size: 13px; }
+
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
+                th { background: #124a9c; color: white; padding: 8px; border: 1px solid #0f172a; text-align: center; }
+                
+                .chart-container {
+                    text-align: center;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 8px;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                }
+                .chart-container img { width: 100%; max-height: 350px; object-fit: contain; }
+                
+                .usage-message { padding: 10px; margin-bottom: 5px; border-radius: 5px; font-size: 12px; font-weight: bold; border: 1px solid; }
+                .usage-message.allow { background: #ecfdf5; color: #086b42; border-color: #9edcbd; }
+                .usage-message.deny { background: #fef2f2; color: #a11c2b; border-color: #f0a7ad; }
+            </style>
+        </head>
+        <body>
+            <div class="page">
+                <div class="header-title">
+                    <h1>گزارش آزمایش دانه بندی سنگدانه</h1>
+                    <h2>استاندارد ملی ایران شماره های 302-406-4977</h2>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-item"><span class="label">نام شرکت</span><span class="value">${$('company').value || '—'}</span></div>
+                    <div class="info-item"><span class="label">شماره نمونه</span><span class="value">${$('sampleId').value || '—'}</span></div>
+                    <div class="info-item"><span class="label">تاریخ</span><span class="value">${$('date').value || '—'}</span></div>
+                    <div class="info-item"><span class="label">نام سنگدانه</span><span class="value">${$('materialName').value}</span></div>
+                    <div class="info-item"><span class="label">رده دانه بندی</span><span class="value">${lastResult.cls}</span></div>
+                    <div class="info-item"><span class="label">وزن کل نمونه (gr)</span><span class="value">${lastResult.total}</span></div>
+                    <div class="info-item"><span class="label">وزن بعد از شستشو (gr)</span><span class="value">${lastResult.after}</span></div>
+                    <div class="info-item"><span class="label">مدول نرمی مبنا</span><span class="value">${$('baseModulus').value || '—'}</span></div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>نمره الک</th>
+                            <th>وزن مانده (gr)</th>
+                            <th>مانده (%)</th>
+                            <th>تجمعی (%)</th>
+                            <th>عبوری (%)</th>
+                            <th>محدوده مجاز</th>
+                            <th>انطباق</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableHTML}
+                    </tbody>
+                </table>
+
+                <div class="chart-container">
+                    <img src="${chartDataUrl}" alt="منحنی دانه بندی">
+                </div>
+
+                ${messagesHTML}
+            </div>
+        </body>
+        </html>
+    `;
+}
 </script>
 
 </body>
