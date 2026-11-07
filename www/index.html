@@ -29,7 +29,6 @@ button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:w
 .ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}
 .chart-wrap{width:100%;overflow:hidden;direction:ltr}
 canvas{display:block;width:100%;height:340px}
-.note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}
 @media(max-width:420px){body{padding:7px}.card{padding:10px}.row{grid-template-columns:1fr}.field input,.field select{width:150px}canvas{height:300px}}
 
 /* فشرده‌سازی جدول و ثابت‌ماندن ستون مشخصات الک */
@@ -85,23 +84,13 @@ button:hover{filter:brightness(1.09)}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
 .chart-wrap canvas{height:350px;width:100%;display:block}
 
-@media(max-width:420px){
- .app-title span{font-size:16px}
- .app-title small{font-size:11px}
- .chart-wrap{padding:2px}
- .chart-wrap canvas{height:330px}
-}
-
-@media print{
- @page{size:A4 landscape;margin:10mm}
- body{background:#fff!important;padding:0!important;color:#111}
- .card{max-width:none;margin:0 0 8mm;padding:8px;border:1px solid #ccc;box-shadow:none;backdrop-filter:none;background:#fff!important;break-inside:avoid}
- .buttons,.action-bar{display:none!important}
- .chart-wrap{overflow:visible}
- canvas{max-width:100%!important;height:280px!important}
- .table-container{overflow:visible}
- .table-container table{width:100%;min-width:0}
- .table-container th:first-child,.table-container td:first-child{position:static;box-shadow:none}
+/* استایل مخصوص چاپ (PDF) */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: #fff !important; color: #000; padding: 0; margin: 0; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; background: #fff !important; margin-bottom: 20px !important; page-break-inside: avoid; }
+  .action-bar { display: none !important; } /* دکمه‌ها در PDF چاپ نشوند */
+  .chart-wrap { border: none !important; }
 }
 </style>
 </head>
@@ -214,7 +203,9 @@ const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
 const PRODUCT_ID = 'full_version_unlock'; 
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
-let hasUsedFreeTrial = localStorage.getItem('app_free_trial_used') === 'true';
+// تعداد دفعات استفاده رایگان
+let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
+const MAX_FREE_TRIAL = 10;
 
 async function initBazaarPayment() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
@@ -249,7 +240,7 @@ async function showPaymentDialog() {
             alert('خطا در ارتباط با درگاه پرداخت: ' + (error.message || error));
         }
     } else {
-        const userWantsToPay = confirm("برای مشاهده نتایج، باید نسخه کامل را خریداری کنید.\n\nآیا مایل به پرداخت هستید؟ (حالت تست)");
+        const userWantsToPay = confirm("تعداد دفعات استفاده رایگان شما به پایان رسید.\nبرای مشاهده نتایج بیشتر، باید نسخه کامل را خریداری کنید.\n\nآیا مایل به پرداخت هستید؟ (حالت تست)");
         if (userWantsToPay) processSuccessfulPayment();
     }
 }
@@ -398,7 +389,6 @@ function calculate(){
   let retained={}, cumulative={}, passing={};
   let cumSum = 0;
   
-  // از الک درشت به ریز حرکت می‌کنیم
   for(const s of sieves){
     if (weights[s] !== null) {
       const pct = (weights[s] / total) * 100;
@@ -473,10 +463,12 @@ function calculate(){
 
   // ================== بررسی وضعیت پرداخت ==================
   if (!isPurchased) {
-      if (!hasUsedFreeTrial) {
-          hasUsedFreeTrial = true;
-          localStorage.setItem('app_free_trial_used', 'true');
-          alert("شما از یک بار محاسبه رایگان خود استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+      if (freeTrialCount < MAX_FREE_TRIAL) {
+          freeTrialCount++;
+          localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
+          if (freeTrialCount === MAX_FREE_TRIAL) {
+            alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+          }
           
           showUsageMessages();
           drawChart();
@@ -591,7 +583,6 @@ function drawChart(){
   line(standardKeys.map(k=>[k,selectedRange[String(k)][1]]),'#111',[],1.4);
 
   if(lastResult&&lastResult.passing){
-    // فقط الک‌هایی که مقدار عبوری دارند رسم می‌شوند
     const sample=ascending.filter(s=>s>=axisMin&&s<=axisMax).map(s=>[s,lastResult.passing[String(s)]]).filter(([s,p])=>p !== null && Number.isFinite(p)&&p>=0&&p<=100);
     line(sample,'#dc0000',[5,4],2);
     c.save(); c.beginPath(); c.rect(plotLeft,m.top,plotWidth,ph); c.clip(); c.fillStyle='#dc0000';
@@ -610,7 +601,7 @@ function drawChart(){
 /* ================== اصلاح نهایی جملات شرطی ================== */
 function showUsageMessages(){
   const box=$('usageResults');
-  box.replaceChildren(); // پاک کردن نتایج قبلی
+  box.replaceChildren(); 
 
   if(!lastResult) return;
 
@@ -632,7 +623,6 @@ function showUsageMessages(){
   add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
   add('بتن تحت سایش', pct <= maxAbrasion);
 }
-/* ========================================================= */
 
 function resetAll(){
   document.querySelectorAll('input.numeric').forEach(e=>e.value='');
