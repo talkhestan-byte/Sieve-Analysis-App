@@ -200,35 +200,55 @@ button:hover{filter:brightness(1.09)}
 'use strict';
 
 // ================== تنظیمات پرداخت کافه‌بازار ==================
-const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE'; 
-const PRODUCT_ID = 'full_version_unlock'; 
+const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
+const PRODUCT_ID = 'full_version_unlock';
 
-let isPurchased = localStorage.getItem('app_purchased') === 'true';
+let isPurchased = false;
 let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
+if (!Number.isFinite(freeTrialCount) || freeTrialCount < 0) freeTrialCount = 0;
+
 const MAX_FREE_TRIAL = 7;
+let paymentInitialization = Promise.resolve();
 
 async function initBazaarPayment() {
+    isPurchased = false;
+
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
         try {
             const { CafebazaarPoolakey } = window.Capacitor.Plugins;
             await CafebazaarPoolakey.initialize({ rsaPublicKey: BAZAAR_RSA_PUBLIC_KEY });
+
             const purchaseInfo = await CafebazaarPoolakey.getPurchaseInfo();
+
             if (purchaseInfo && purchaseInfo.purchases && purchaseInfo.purchases.length > 0) {
                 const owned = purchaseInfo.purchases.find(p => p.productId === PRODUCT_ID);
+
                 if (owned) {
                     isPurchased = true;
                     localStorage.setItem('app_purchased', 'true');
+                } else {
+                    localStorage.removeItem('app_purchased');
                 }
+            } else {
+                localStorage.removeItem('app_purchased');
             }
-        } catch (error) { console.error('Bazaar init error:', error); }
+        } catch (error) {
+            isPurchased = false;
+            console.error('Bazaar init error:', error);
+        }
     }
 }
 
 async function showPaymentDialog() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
         const { CafebazaarPoolakey } = window.Capacitor.Plugins;
+
         try {
-            const result = await CafebazaarPoolakey.purchaseProduct({ productId: PRODUCT_ID, payload: 'user_purchase' });
+            const result = await CafebazaarPoolakey.purchaseProduct({
+                productId: PRODUCT_ID,
+                payload: 'user_purchase'
+            });
+
             if (result.state === 'PURCHASED') {
                 processSuccessfulPayment();
             } else if (result.state === 'CANCELLED') {
@@ -240,8 +260,7 @@ async function showPaymentDialog() {
             alert('خطا در ارتباط با درگاه پرداخت: ' + (error.message || error));
         }
     } else {
-        const userWantsToPay = confirm("تعداد دفعات استفاده رایگان شما به پایان رسید.\nبرای مشاهده نتایج بیشتر، باید نسخه کامل را خریداری کنید.\n\nآیا مایل به پرداخت هستید؟ (حالت تست)");
-        if (userWantsToPay) processSuccessfulPayment();
+        alert('برای خرید نسخه کامل، لطفاً از نسخه اندرویدی برنامه که از کافه‌بازار نصب شده است استفاده کنید.');
     }
 }
 
@@ -346,7 +365,7 @@ function toggleCategoryFields(){
   cls.innerHTML='<option value="نمی‌دانم">نمی‌دانم</option>';
   Object.keys(ranges).filter(k=>fine?k.startsWith('ماسه'):k.startsWith('شن')).forEach(k=>cls.add(new Option(k,k)));
   if([...cls.options].some(o=>o.value===old))cls.value=old;
-  
+
   // تغییر فیلد مدول نرمی به فیلد عبوری الک ۲۰۰ برای درشت‌دانه
   const baseLabel = document.querySelector('#baseModulusField label');
   const baseInput = $('baseModulus');
@@ -367,7 +386,7 @@ function toggleCategoryFields(){
       baseInput.value = '';
     }
   }
-  
+
   updateRanges();
 }
 
@@ -377,7 +396,17 @@ function updateRanges(){
   invalidate();
 }
 
-function calculate(){
+async function calculate(){
+
+  // کنترل سهمیه پیش از شروع هرگونه محاسبه
+  await paymentInitialization;
+
+  if (!isPurchased && freeTrialCount >= MAX_FREE_TRIAL) {
+      invalidate();
+      await showPaymentDialog();
+      return;
+  }
+
   const total=number('totalWeight');
   const after=number('afterWash');
   const base=number('baseModulus');
@@ -407,10 +436,10 @@ function calculate(){
   const diff=Math.abs(after-sum);
   const tol=total*0.003; 
   const passing200=washLoss/total*100;
-  
+
   let retained={}, cumulative={}, passing={};
   let cumSum = 0;
-  
+
   for(const s of sieves){
     if (weights[s] !== null) {
       const pct = (weights[s] / total) * 100;
@@ -447,7 +476,7 @@ function calculate(){
   // ================== منطق دقیق شرط الک 200 ==================
   let max200 = null;
   const isCrushed = $('materialName').value.includes('شکسته');
-  
+
   if (cat === 'ریزدانه') {
       if (isCrushed) {
           if (cls === 'ماسه رده3') max200 = 16;
@@ -481,7 +510,7 @@ function calculate(){
       $('rng-'+s).textContent = rangeText;
       $('cmp-'+s).textContent = status;
       $('cmp-'+s).className = status === 'منطبق' ? 'ok' : (status === 'نامنطبق' ? 'not-ok' : '');
-      
+
     } else {
       $('ret-'+s).textContent='-';
       $('cum-'+s).textContent='-';
@@ -566,23 +595,13 @@ function calculate(){
     total,after,cls,cat,diff,tol,hasPan
   };
 
+  // شمارش فقط پس از محاسبه معتبر و موفق
   if (!isPurchased) {
-      if (freeTrialCount < MAX_FREE_TRIAL) {
-          freeTrialCount++;
-          localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
-          if (freeTrialCount === MAX_FREE_TRIAL) {
-            alert("شما از ۷ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
-          }
-          drawChart();
-          return;
-      } else {
-          $('tvFm').textContent = '-';
-          $('tvPassing200').textContent = '-';
-          $('usageResults').innerHTML = '';
-          warnBox.textContent = '';
-          drawChart();
-          showPaymentDialog();
-          return;
+      freeTrialCount++;
+      localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
+
+      if (freeTrialCount === MAX_FREE_TRIAL) {
+          alert("شما از ۷ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
       }
   }
 
@@ -720,7 +739,9 @@ window.addEventListener('resize',drawChart);
 
 buildTable();
 toggleCategoryFields();
-document.addEventListener('DOMContentLoaded', initBazaarPayment);
+
+// بررسی خرید بازار بلافاصله پس از آماده شدن صفحه
+paymentInitialization = initBazaarPayment();
 
 // ================== چاپ بومی اندروید و طراحی برگه ==================
 async function exportPDF() {
@@ -731,7 +752,7 @@ async function exportPDF() {
 
     let defaultName = `گزارش_دانه_بندی_${$('sampleId').value || 'نمونه'}`;
     let fileName = prompt("لطفاً نام فایل خروجی را وارد کنید:", defaultName);
-    
+
     if (fileName === null) {
         return; 
     }
@@ -774,15 +795,15 @@ function buildPrintHTML() {
     let tableHTML = '';
     for(const s of sieves) {
         if(lastResult.weights[s] === null) continue;
-        
+
         const r = ranges[lastResult.cls]?.[s];
         const ret = lastResult.retained[s] !== null ? lastResult.retained[s].toFixed(1) : '-';
         const cum = lastResult.cumulative[s] !== null ? lastResult.cumulative[s].toFixed(1) : '-';
         const pas = lastResult.passing[s] !== null ? lastResult.passing[s].toFixed(1) : '-';
-        
+
         let rangeTxt = r ? r.join(' - ') + '٪' : '—';
         let status = '—';
-        
+
         if (s === '0.075' && isSand) {
             rangeTxt = 'طبق پاورقی جدول ۱ استاندارد ۳۰۲';
             if (max200 !== null) {
@@ -791,7 +812,7 @@ function buildPrintHTML() {
         } else if (r) {
             status = lastResult.passing[s] >= r[0] - 1e-8 && lastResult.passing[s] <= r[1] + 1e-8 ? 'منطبق' : 'نامنطبق';
         }
-        
+
         const statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
 
         tableHTML += `
@@ -850,7 +871,7 @@ function buildPrintHTML() {
                 }
                 .header-title h1 { margin: 0; font-size: 16px; }
                 .header-title h2 { margin: 2px 0 0; font-size: 10px; color: #64748b; font-weight: normal; }
-                
+
                 .info-box {
                     display: grid;
                     grid-template-columns: repeat(4, 1fr);
@@ -868,7 +889,7 @@ function buildPrintHTML() {
 
                 table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9px; }
                 th { background: #124a9c; color: white; padding: 4px; border: 1px solid #0f172a; text-align: center; font-weight:bold; }
-                
+
                 .chart-container {
                     text-align: center;
                     border: 1px solid #cbd5e1;
@@ -885,7 +906,7 @@ function buildPrintHTML() {
                     height: 280px; 
                 }
                 .chart-container img { width: 100%; height: 100%; object-fit: contain; }
-                
+
                 .usage-message { padding: 4px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; font-weight: bold; border: 1px solid; }
                 .usage-message.allow { background: #ecfdf5; color: #086b42; border-color: #9edcbd; }
                 .usage-message.deny { background: #fef2f2; color: #a11c2b; border-color: #f0a7ad; }
