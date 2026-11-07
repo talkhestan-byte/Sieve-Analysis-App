@@ -204,7 +204,6 @@ const PRODUCT_ID = 'full_version_unlock';
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
 let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
-// تغییر تعداد محاسبه رایگان به 7 بار
 const MAX_FREE_TRIAL = 7;
 
 async function initBazaarPayment() {
@@ -447,7 +446,7 @@ function calculate(){
       let rangeText = '-';
 
       if (s === '0.075' && cat === 'ریزدانه') {
-          rangeText = 'طبق پاورقی جدول ۱';
+          rangeText = 'طبق پاورقی جدول ۱ استاندارد ۳۰۲';
           if (max200 !== null) {
               status = passing200 <= max200 + 1e-8 ? 'منطبق' : 'نامنطبق';
           }
@@ -464,7 +463,7 @@ function calculate(){
       $('ret-'+s).textContent='-';
       $('cum-'+s).textContent='-';
       $('pas-'+s).textContent='-';
-      $('rng-'+s).textContent = (s === '0.075' && cat === 'ریزدانه') ? 'طبق پاورقی جدول ۱' : '-';
+      $('rng-'+s).textContent = (s === '0.075' && cat === 'ریزدانه') ? 'طبق پاورقی جدول ۱ استاندارد ۳۰۲' : '-';
       $('cmp-'+s).textContent='-';
       $('cmp-'+s).className='';
     }
@@ -695,15 +694,14 @@ async function exportPDF() {
         return;
     }
 
-    // درخواست نام فایل از کاربر
     let defaultName = `گزارش_دانه_بندی_${$('sampleId').value || 'نمونه'}`;
     let fileName = prompt("لطفاً نام فایل خروجی را وارد کنید:", defaultName);
     
     if (fileName === null) {
-        return; // کاربر لغو کرد
+        return; 
     }
     if (fileName.trim() === "") {
-        fileName = "گزارش_دانه_بندی"; // اگر خالی گذاشت
+        fileName = "گزارش_دانه_بندی"; 
     }
 
     try {
@@ -711,7 +709,6 @@ async function exportPDF() {
             const { Printer } = window.Capacitor.Plugins;
             if (Printer) {
                 const printHTML = buildPrintHTML();
-                // ارسال نام فایل به پلاگین چاپ
                 await Printer.print({ content: printHTML, name: fileName });
             } else {
                 alert('پلاگین چاپ پیدا نشد.');
@@ -752,7 +749,7 @@ function buildPrintHTML() {
         let status = '—';
         
         if (s === '0.075' && isSand) {
-            rangeTxt = 'طبق پاورقی جدول ۱';
+            rangeTxt = 'طبق پاورقی جدول ۱ استاندارد ۳۰۲';
             if (max200 !== null) {
                 status = lastResult.passing200 <= max200 + 1e-8 ? 'منطبق' : 'نامنطبق';
             }
@@ -836,11 +833,15 @@ function buildPrintHTML() {
                     border-radius: 6px;
                     padding: 8px;
                     margin-bottom: 8px;
-                    flex-grow: 1; /* پر کردن فضای باقیمانده */
-                    background: linear-gradient(145deg, #f4f9ff, #e6f0fa); /* بکگراند رنگی */
+                    /* دو برابر کردن ابعاد گراف */
+                    flex-grow: 2; 
+                    background: linear-gradient(145deg, #f4f9ff, #e6f0fa); 
                     box-shadow: inset 0 0 10px rgba(0, 103, 192, 0.05);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
-                .chart-container img { width: 100%; height: 100%; max-height: 300px; object-fit: contain; }
+                .chart-container img { width: 100%; height: 100%; max-height: 600px; object-fit: contain; }
                 
                 .usage-message { padding: 4px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; font-weight: bold; border: 1px solid; }
                 .usage-message.allow { background: #ecfdf5; color: #086b42; border-color: #9edcbd; }
@@ -895,4 +896,4 @@ function buildPrintHTML() {
 </script>
 
 </body>
-  </html>
+</html>
