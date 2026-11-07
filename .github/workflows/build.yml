@@ -36,14 +36,8 @@ jobs:
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6 typescript esbuild
           npm install @salarizadi/capacitor-cafebazaar-poolakey
-          npm install @capacitor/core@6
-          npm install capacitor-zoom-plugin
-          npm install @bcyesil/capacitor-plugin-printer@0.0.5
-          
-          # --- نصب پلاگین‌های مورد نیاز فایل PDF ---
           npm install @capacitor/filesystem@6
           npm install @capacitor-community/file-opener@6.0.1
-          
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           npm install html2pdf.js
 
@@ -55,34 +49,44 @@ jobs:
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
 
-      - name: Configure Capacitor
+      - name: Configure Capacitor & Apply Icons & Fix Zoom
         run: |
           set -eu
 
           rm -f capacitor.config.ts capacitor.config.json
           cat > capacitor.config.json <<'EOF'
           {
-          "appId": "com.yourname.sieveanalysis",
-          "appName": "دانه بندی",
-          "webDir": "www"
+            "appId": "com.yourname.sieveanalysis",
+            "appName": "دانه بندی",
+            "webDir": "www"
           }
           EOF
 
+          # ۱. ساخت پروژه اندروید و سینک
           npx cap add android
           npx cap sync android
 
-          # ================== فعال‌سازی زوم در وب‌ویو ==================
-          # این خط به اندروید می‌گوید که زوم لمسی را در WebView فعال کند
-          sed -i 's/WebSettings settings = webView.getSettings();/WebSettings settings = webView.getSettings();\n        settings.setBuiltInZoomControls(true);\n        settings.setSupportZoom(true);\n        settings.setDisplayZoomControls(false);/' android/app/src/main/java/com/yourname/sieveanalysis/MainActivity.java || true
-          # ============================================================
-
-          # افزودن JitPack
-          PROJECT_GRADLE="android/build.gradle"
-          if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
-          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+          # ۲. فعال‌سازی زوم با تغییر کد اصلی جاوا (MainActivity.java)
+          JAVA_FILE=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
+          if [ -n "$JAVA_FILE" ]; then
+            echo "Injecting Zoom settings into: $JAVA_FILE"
+            # اضافه کردن ایمپورت‌های لازم
+            sed -i '/import com.getcapacitor.BridgeActivity;/i import android.webkit.WebSettings;\nimport android.webkit.WebView;' "$JAVA_FILE"
+            # تزریق تنظیمات زوم به تابع onCreate
+            sed -i '/super.onCreate(savedInstanceState);/a \        WebView webView = getBridge().getWebView();\n        WebSettings settings = webView.getSettings();\n        settings.setBuiltInZoomControls(true);\n        settings.setSupportZoom(true);\n        settings.setDisplayZoomControls(false);' "$JAVA_FILE"
+          else
+            echo "Warning: MainActivity.java not found!"
           fi
 
-          # اعمال آیکون‌ها
+          # ۳. اضافه کردن مخزن JitPack برای پلاگین کافه‌بازار
+          PROJECT_GRADLE="android/build.gradle"
+          if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
+            sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+          fi
+          echo "JitPack repository injected."
+
+          # ۴. اعمال آیکون‌های سفارشی
+          echo "Applying custom icons..."
           if [ -d "assets" ]; then
             RES_DIR="android/app/src/main/res"
             for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
@@ -105,6 +109,9 @@ jobs:
               <foreground android:drawable="@mipmap/ic_launcher_foreground" />
           </adaptive-icon>
           EOF
+            echo "Icons applied successfully."
+          else
+            echo "Warning: assets folder not found. Using default Capacitor icon."
           fi
 
       - name: Build Debug APK
@@ -118,10 +125,94 @@ jobs:
           mkdir -p output
           cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
 
-      - name: Upload APK Artifact
+      - name: Restore persistent signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          set -eu
+          test -n "$KEYSTORE_BASE64" || { echo "Missing SIGNING_KEYSTORE_BASE64 secret"; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
+          test -s android/app/release-key.jks
+
+      - name: Configure release signing
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -eu
+          test -n "$SIGNING_STORE_PASSWORD"
+          test -n "$SIGNING_KEY_ALIAS"
+          test -n "$SIGNING_KEY_PASSWORD"
+          cat > android/app/signing.gradle <<'EOF'
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("release-key.jks")
+                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+          if ! grep -q "signing.gradle" android/app/build.gradle; then
+            echo "" >> android/app/build.gradle
+            echo "apply from: 'signing.gradle'" >> android/app/build.gradle
+          fi
+
+      - name: Build signed release AAB
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -eu
+          cd android
+          ./gradlew bundleRelease
+          test -s app/build/outputs/bundle/release/app-release.aab
+          cd ..
+          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
+
+      - name: Download official Cafe Bazaar Bundle Signer
+        run: |
+          set -eu
+          curl --fail --location --silent --show-error \
+            https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
+            --output bundlesigner.jar
+          test -s bundlesigner.jar
+
+      - name: Generate Cafe Bazaar BIN
+        env:
+          KS_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+        run: |
+          set -eu
+          java -jar bundlesigner.jar genbin \
+            --verbose \
+            --bundle android/app/build/outputs/bundle/release/app-release.aab \
+            --bin output \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --ks android/app/release-key.jks \
+            --ks-type PKCS12 \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "env:KS_PASS" \
+            --key-pass "env:KEY_PASS"
+          test -n "$(find output -maxdepth 1 -name '*.bin' -print -quit)"
+          test -s output/Sieve-Analysis.aab
+          test -s output/Sieve-Analysis-debug.apk
+
+      - name: Upload all release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Sieve-Analysis-APK
-          path: output/Sieve-Analysis-debug.apk
+          name: Sieve-Analysis-CafeBazaar
+          path: output/*
           if-no-files-found: error
           retention-days: 14
