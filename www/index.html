@@ -29,6 +29,7 @@ button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:w
 .ok{color:var(--success);font-weight:bold}.not-ok{color:var(--danger);font-weight:bold}
 .chart-wrap{width:100%;overflow:hidden;direction:ltr}
 canvas{display:block;width:100%;height:340px}
+.note{color:#64748b;font-size:11px;text-align:center;line-height:1.7}
 @media(max-width:420px){body{padding:7px}.card{padding:10px}.row{grid-template-columns:1fr}.field input,.field select{width:150px}canvas{height:300px}}
 
 /* فشرده‌سازی جدول و ثابت‌ماندن ستون مشخصات الک */
@@ -83,6 +84,13 @@ button:hover{filter:brightness(1.09)}
 .chart-card{overflow:hidden}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
 .chart-wrap canvas{height:350px;width:100%;display:block}
+
+@media(max-width:420px){
+ .app-title span{font-size:16px}
+ .app-title small{font-size:11px}
+ .chart-wrap{padding:2px}
+ .chart-wrap canvas{height:330px}
+}
 
 @media print{
  @page{size:A4 landscape;margin:10mm}
@@ -308,7 +316,7 @@ function buildTable(){
     let tr=document.createElement('tr');
     tr.innerHTML=`
       <td><b>${sieveLabels[s]||s}</b></td>
-      <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder=""></td>
+      <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
       <td id="ret-${s}">-</td>
       <td id="cum-${s}">-</td>
       <td id="pas-${s}">-</td>
@@ -367,27 +375,30 @@ function calculate(){
   if(!Number.isFinite(after)||after<=0||after>total) return alert('وزن بعد از شستشو باید مثبت و حداکثر برابر وزن کل باشد.');
   if(cat==='ریزدانه'&&(!Number.isFinite(base)||base<=0)) return alert('مدول نرمی مبنا باید مثبت باشد.');
 
-  let weights={}, enteredCount=0;
+  let weights={}, enteredCount=0, sum=0;
   for(const s of sieves){
     const raw=normalizeDigits($('w-'+s).value);
     if(raw!==''&&(!Number.isFinite(Number(raw))||Number(raw)<0)) return alert('وزن الک نامعتبر است.');
     if(raw !== '') {
       weights[s] = Number(raw);
+      sum += Number(raw);
       enteredCount++;
     } else {
-      weights[s] = null; // مقدار تهی
+      weights[s] = null; 
     }
   }
 
   if(enteredCount === 0) return alert('وزن مانده حداقل یک الک را وارد کنید.');
 
   const washLoss=total-after;
+  const diff=Math.abs(after-sum);
+  const tol=total*.003;
   const passing200=washLoss/total*100;
   
   let retained={}, cumulative={}, passing={};
   let cumSum = 0;
   
-  // از الک درشت به ریز حرکت می‌کنیم (ترتیب آرایه sieves از 100 به 0.075 است)
+  // از الک درشت به ریز حرکت می‌کنیم
   for(const s of sieves){
     if (weights[s] !== null) {
       const pct = (weights[s] / total) * 100;
@@ -402,14 +413,12 @@ function calculate(){
     }
   }
 
-  // اگر الک 0.075 وارد نشده بود، از عبوری شستشو استفاده می‌کنیم
   const hasPan = weights['0.075'] !== null;
-  if(!hasPan) {
+  if(!hasPan && total > 0) {
     passing['0.075'] = passing200;
     cumulative['0.075'] = 100 - passing200;
   }
 
-  // محاسبه مدول نرمی فقط بر اساس الک‌هایی که مقدار دارند
   const fmSieves=['4.75','2.36','1.18','0.6','0.3','0.15'];
   let fmSum = 0;
   let fmCount = 0;
@@ -420,6 +429,14 @@ function calculate(){
     }
   });
   const fm = fmCount > 0 ? (fmSum / 100) : NaN;
+
+  let warnings=[];
+  const panMismatch=hasPan&&Math.abs(passing['0.075']-passing200)>.3;
+  const acceptanceValid=diff<=tol&&!panMismatch;
+
+  if(diff>tol) warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
+  if(cat==='ریزدانه'&&!isNaN(fm)&&Math.abs(fm-base)>.2) warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
+  if(panMismatch) warnings.push('اختلاف عبوری الک ۰٫۰۷۵ میلی‌متر با افت شستشو بیش از ۰٫۳ واحد درصد است.');
 
   const r=ranges[cls]||{};
 
@@ -446,18 +463,21 @@ function calculate(){
   }
 
   $('tvFm').textContent=cat==='ریزدانه' && !isNaN(fm) ? fm.toFixed(2) : '-';
-  $('tvPassing200').textContent=passing200.toFixed(2)+'%';
-  
+  $('tvPassing200').textContent=total > 0 ? passing200.toFixed(2)+'%' : '-';
+  $('warnBox').textContent=warnings.join(' | ');
+
   lastResult={
     weights,retained,cumulative,passing,passing200,fm,
-    total,after,cls,cat
+    total,after,cls,cat,diff,tol,panMismatch,acceptanceValid
   };
 
+  // ================== بررسی وضعیت پرداخت ==================
   if (!isPurchased) {
       if (!hasUsedFreeTrial) {
           hasUsedFreeTrial = true;
           localStorage.setItem('app_free_trial_used', 'true');
-          alert("شما از یک بار محاسبه رایگان خود استفاده کردید.");
+          alert("شما از یک بار محاسبه رایگان خود استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+          
           showUsageMessages();
           drawChart();
           return;
@@ -467,10 +487,12 @@ function calculate(){
           $('usageResults').innerHTML = '';
           $('warnBox').textContent = '';
           drawChart();
+          
           showPaymentDialog();
           return;
       }
   }
+  // =========================================================
 
   showUsageMessages();
   drawChart();
@@ -569,7 +591,7 @@ function drawChart(){
   line(standardKeys.map(k=>[k,selectedRange[String(k)][1]]),'#111',[],1.4);
 
   if(lastResult&&lastResult.passing){
-    // فقط الک‌هایی که کاربر وارد کرده رسم می‌شوند
+    // فقط الک‌هایی که مقدار عبوری دارند رسم می‌شوند
     const sample=ascending.filter(s=>s>=axisMin&&s<=axisMax).map(s=>[s,lastResult.passing[String(s)]]).filter(([s,p])=>p !== null && Number.isFinite(p)&&p>=0&&p<=100);
     line(sample,'#dc0000',[5,4],2);
     c.save(); c.beginPath(); c.rect(plotLeft,m.top,plotWidth,ph); c.clip(); c.fillStyle='#dc0000';
@@ -595,7 +617,6 @@ function showUsageMessages(){
   const pct = lastResult.passing200;
   const crushed = $('materialName').value.includes('شکسته');
   
-  // محدودیت‌های عبوری 200
   const maxNormal = crushed ? 7 : 5;
   const maxAbrasion = crushed ? 5 : 3;
   const maxFreeze = crushed ? 7 : 5;
@@ -603,12 +624,10 @@ function showUsageMessages(){
   function add(name, allowed){
     const el=document.createElement('div');
     el.className='usage-message '+(allowed?'allow':'deny');
-    // با کلمات دقیق خواسته شده
     el.textContent = `این سنگدانه برای استفاده در ${name} ${allowed?'مجاز است':'ممنوع است'}.`;
     box.appendChild(el);
   }
 
-  // این سه جمله همیشه برای همه نتایج نمایش داده می‌شوند
   add('بتن مسلح و معمولی', pct <= maxNormal);
   add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
   add('بتن تحت سایش', pct <= maxAbrasion);
@@ -621,9 +640,24 @@ function resetAll(){
   invalidate();
 }
 
+$('spClass').addEventListener('change',updateRanges);
+$('materialName').addEventListener('change',invalidate);
+
+['totalWeight','afterWash','baseModulus'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    const el=$(id);
+    const v=cleanNumeric(el.value);
+    if(el.value!==v)el.value=v;
+    invalidate();
+  });
+});
+
+window.addEventListener('resize',drawChart);
+
 buildTable();
 toggleCategoryFields();
 document.addEventListener('DOMContentLoaded', initBazaarPayment);
 </script>
+
 </body>
 </html>
