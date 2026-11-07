@@ -657,20 +657,20 @@ document.addEventListener('DOMContentLoaded', initBazaarPayment);
 // ================== چاپ بومی اندروید ==================
 async function exportPDF() {
     try {
-        // بررسی اینکه آیا در محیط بومی Capacitor هستیم
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-            // استفاده از پلاگین چاپ بومی
+            // استفاده از پلاگین سازگار با Capacitor 6
             const { Printer } = window.Capacitor.Plugins;
             if (Printer) {
-                await Printer.printWebView({
+                // این پلاگین به جای printWebView از print با محتوای HTML استفاده می‌کند
+                const content = document.body.innerHTML;
+                await Printer.print({
+                    content: content,
                     name: 'گزارش آزمایش دانه بندی سنگدانه'
                 });
             } else {
-                // اگر پلاگین پیدا نشد، به روش قبلی برگرد
                 window.print();
             }
         } else {
-            // در مرورگر (حالت تست) از چاپ معمولی استفاده کن
             window.print();
         }
     } catch (error) {
