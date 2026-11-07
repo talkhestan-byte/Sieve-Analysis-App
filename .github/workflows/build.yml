@@ -53,32 +53,34 @@ jobs:
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
 
-      - name: Configure Capacitor & Apply Icons
+      - name: Configure Capacitor
         run: |
           set -eu
 
           rm -f capacitor.config.ts capacitor.config.json
           cat > capacitor.config.json <<'EOF'
           {
-            "appId": "com.yourname.sieveanalysis",
-            "appName": "Sieve Analysis",
-            "webDir": "www"
+          "appId": "com.yourname.sieveanalysis",
+          "appName": "دانه بندی",
+          "webDir": "www"
           }
           EOF
 
-          # ۱. ساخت پروژه اندروید
           npx cap add android
-          
-          # ۲. انتقال پلاگین‌ها به پروژه اندروید (باید بعد از نصب پلاگین‌ها باشد)
           npx cap sync android
 
-          # ۳. اضافه کردن مخزن JitPack
+          # ================== فعال‌سازی زوم در وب‌ویو ==================
+          # این خط به اندروید می‌گوید که زوم لمسی را در WebView فعال کند
+          sed -i 's/WebSettings settings = webView.getSettings();/WebSettings settings = webView.getSettings();\n        settings.setBuiltInZoomControls(true);\n        settings.setSupportZoom(true);\n        settings.setDisplayZoomControls(false);/' android/app/src/main/java/com/yourname/sieveanalysis/MainActivity.java || true
+          # ============================================================
+
+          # افزودن JitPack
           PROJECT_GRADLE="android/build.gradle"
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
-            sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
 
-          # ۴. اعمال آیکون‌ها
+          # اعمال آیکون‌ها
           if [ -d "assets" ]; then
             RES_DIR="android/app/src/main/res"
             for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
