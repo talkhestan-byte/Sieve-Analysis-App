@@ -84,13 +84,6 @@ button:hover{filter:brightness(1.09)}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
 .chart-wrap canvas{height:350px;width:100%;display:block}
 
-/* کم‌رنگ کردن پلیس‌هولدرها */
-::placeholder {
-  color: #94a3b8 !important; /* رنگ خاکستری کم‌رنگ */
-  opacity: 0.6 !important; 
-  font-size: 12px;
-}
-
 /* استایل مخصوص چاپ (PDF) */
 @media print {
   @page { size: A4 portrait; margin: 10mm; }
@@ -190,7 +183,7 @@ button:hover{filter:brightness(1.09)}
 
   <div class="action-bar">
     <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="printPage()">خروجی PDF</button>
+    <button class="btn-pdf" onclick="window.print()">خروجی PDF</button>
     <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
   </div>
 </div>
@@ -210,8 +203,8 @@ const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
 const PRODUCT_ID = 'full_version_unlock'; 
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
-let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 7);
-const MAX_FREE_TRIAL = 7;
+let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
+const MAX_FREE_TRIAL = 10;
 
 async function initBazaarPayment() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
@@ -285,8 +278,8 @@ const ranges={
 const sieveLabels={
 '0.075':'#200','0.15':'#100','0.3':'#50','0.6':'#30',
 '1.18':'#16','2.36':'#8','4.75':'#4','9.5':'3/8″',
-'12.5':'1/2″','19':'3/4″','25':'1″','37.5':'½1″',
-'50':'2″','63':'½2″','75':'3″','90':'½3″','100':'4″'
+'12.5':'1/2″','19':'3/4″','25':'1″','37.5':'1½″',
+'50':'2″','63':'2½″','75':'3″','90':'3½″','100':'4″'
 };
 
 const $=id=>document.getElementById(id);
@@ -306,33 +299,6 @@ function number(id){
   return v.trim()===''?NaN:Number(v);
 }
 
-// ================== تابع چاپ اختصاصی و بدون خطا ==================
-function printPage() {
-    // ایجاد یک iframe مخفی برای جلوگیری از خطای ری‌لود صفحه
-    var iframe = document.createElement('iframe');
-    iframe.style.position = "absolute";
-    iframe.style.width = "0px";
-    iframe.style.height = "0px";
-    iframe.style.border = "none";
-    document.body.appendChild(iframe);
-    
-    var doc = iframe.contentWindow.document;
-    // کپی کردن استایل‌ها و محتوای صفحه فعلی
-    var styles = document.querySelector('style').innerHTML;
-    var content = document.body.innerHTML;
-    
-    doc.open();
-    doc.write('<html dir="rtl"><head><style>' + styles + '</style></head><body>' + content + '</body></html>');
-    doc.close();
-    
-    iframe.onload = function() {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(function() { document.body.removeChild(iframe); }, 1000);
-    };
-}
-// ===================================================================
-
 function buildTable(){
   const body=$('sieveBody');
   body.innerHTML='';
@@ -340,7 +306,7 @@ function buildTable(){
     let tr=document.createElement('tr');
     tr.innerHTML=`
       <td><b>${sieveLabels[s]||s}</b></td>
-      <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="0"></td>
+      <td><input class="numeric" id="w-${s}" type="text" inputmode="decimal" maxlength="6" autocomplete="off" placeholder=""></td>
       <td id="ret-${s}">-</td>
       <td id="cum-${s}">-</td>
       <td id="pas-${s}">-</td>
@@ -416,7 +382,7 @@ function calculate(){
 
   const washLoss=total-after;
   const diff=Math.abs(after-sum);
-  const tol=total*0.003; // 3 دهم درصد (0.003)
+  const tol=total*0.003; 
   const passing200=washLoss/total*100;
   
   let retained={}, cumulative={}, passing={};
@@ -480,12 +446,13 @@ function calculate(){
   $('tvFm').textContent=cat==='ریزدانه' && !isNaN(fm) ? fm.toFixed(2) : '-';
   $('tvPassing200').textContent=total > 0 ? passing200.toFixed(2)+'%' : '-';
 
-  // ================== منطق جدید پیام‌ها ==================
+  // ================== منطق نمایش هشدارها ==================
   const box = $('usageResults');
   box.replaceChildren(); 
   const warnBox = $('warnBox');
   warnBox.textContent = ''; 
 
+  // 1. هشدار اختلاف وزن (اگر بیش از 3 دهم درصد باشد)
   if (diff > tol) {
       const el1 = document.createElement('div');
       el1.className='usage-message deny'; 
@@ -497,6 +464,17 @@ function calculate(){
       el2.textContent = 'از نتایج این آزمون برای اهداف پذیرش استفاده نگردد (نتیجه مردود).';
       box.appendChild(el2);
   } else {
+      // 2. هشدار مدول نرمی (فقط برای ریزدانه)
+      const panMismatch = hasPan && Math.abs(passing['0.075']-passing200) > 0.3;
+      
+      if (cat === 'ریزدانه' && !isNaN(fm) && Math.abs(fm - base) > 0.2) {
+          warnBox.textContent = 'اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.';
+      }
+      if (panMismatch) {
+          warnBox.textContent += (warnBox.textContent ? ' | ' : '') + 'اختلاف عبوری الک ۰٫۰۷۵ میلی‌متر با افت شستشو بیش از ۰٫۳ واحد درصد است.';
+      }
+
+      // 3. نمایش ۳ جمله شرطی
       const pct = passing200;
       const crushed = $('materialName').value.includes('شکسته');
       
@@ -515,6 +493,7 @@ function calculate(){
       add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
       add('بتن تحت سایش', pct <= maxAbrasion);
   }
+  // =======================================================
 
   lastResult={
     weights,retained,cumulative,passing,passing200,fm,
@@ -526,7 +505,7 @@ function calculate(){
           freeTrialCount++;
           localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
           if (freeTrialCount === MAX_FREE_TRIAL) {
-            alert("شما از 7 بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+            alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
           }
           drawChart();
           return;
