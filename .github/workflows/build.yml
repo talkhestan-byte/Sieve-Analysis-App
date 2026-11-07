@@ -49,6 +49,7 @@ jobs:
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
 
+      
       - name: Configure Capacitor & Apply Icons & Fix Zoom
         run: |
           set -eu
@@ -66,42 +67,85 @@ jobs:
           npx cap add android
           npx cap sync android
 
-          # ۲. فعال‌سازی زوم با تغییر کد اصلی جاوا (MainActivity.java)
+          # ۲. ساخت MainActivity با پشتیبانی واقعی از زوم
           JAVA_FILE=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
-          if [ -n "$JAVA_FILE" ]; then
-            echo "Injecting Zoom settings into: $JAVA_FILE"
-            # اضافه کردن ایمپورت‌های لازم
-            sed -i '/import com.getcapacitor.BridgeActivity;/i import android.webkit.WebSettings;\nimport android.webkit.WebView;' "$JAVA_FILE"
-            # تزریق تنظیمات زوم به تابع onCreate
-            sed -i '/super.onCreate(savedInstanceState);/a \        WebView webView = getBridge().getWebView();\n        WebSettings settings = webView.getSettings();\n        settings.setBuiltInZoomControls(true);\n        settings.setSupportZoom(true);\n        settings.setDisplayZoomControls(false);' "$JAVA_FILE"
-          else
-            echo "Warning: MainActivity.java not found!"
+
+          if [ -z "$JAVA_FILE" ]; then
+            echo "ERROR: MainActivity.java not found!"
+            exit 1
           fi
+
+          echo "Creating MainActivity with native zoom support: $JAVA_FILE"
+
+          cat > "$JAVA_FILE" <<'EOF'
+          package com.yourname.sieveanalysis;
+
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  WebView webView = getBridge().getWebView();
+
+                  if (webView != null) {
+                      WebSettings settings = webView.getSettings();
+
+                      settings.setSupportZoom(true);
+                      settings.setBuiltInZoomControls(true);
+                      settings.setDisplayZoomControls(false);
+
+                      settings.setUseWideViewPort(true);
+                      settings.setLoadWithOverviewMode(true);
+
+                      webView.setHorizontalScrollBarEnabled(true);
+                      webView.setVerticalScrollBarEnabled(true);
+                  }
+              }
+          }
+          EOF
+
+          echo "MainActivity.java created successfully."
+          cat "$JAVA_FILE"
 
           # ۳. اضافه کردن مخزن JitPack برای پلاگین کافه‌بازار
           PROJECT_GRADLE="android/build.gradle"
+
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
             sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
+
           echo "JitPack repository injected."
 
           # ۴. اعمال آیکون‌های سفارشی
           echo "Applying custom icons..."
+
           if [ -d "assets" ]; then
             RES_DIR="android/app/src/main/res"
+
             for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
               if [ -f "assets/icon-only.png" ]; then
                 cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher.png"
                 cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher_round.png"
               fi
+
               if [ -f "assets/icon-background.png" ]; then
                 cp "assets/icon-background.png" "$RES_DIR/$d/ic_launcher_background.png"
               fi
+
               if [ -f "assets/icon-foreground.png" ]; then
                 cp "assets/icon-foreground.png" "$RES_DIR/$d/ic_launcher_foreground.png"
               fi
             done
+
             mkdir -p "$RES_DIR/mipmap-anydpi-v26/"
+
             cat > "$RES_DIR/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -109,10 +153,12 @@ jobs:
               <foreground android:drawable="@mipmap/ic_launcher_foreground" />
           </adaptive-icon>
           EOF
+
             echo "Icons applied successfully."
           else
             echo "Warning: assets folder not found. Using default Capacitor icon."
           fi
+
 
       - name: Build Debug APK
         run: |
