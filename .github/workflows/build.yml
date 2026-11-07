@@ -36,6 +36,8 @@ jobs:
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6 typescript esbuild
           npm install @salarizadi/capacitor-cafebazaar-poolakey
+          npm install @capacitor/core@6
+          npm install capacitor-zoom-plugin
           npm install @bcyesil/capacitor-plugin-printer@0.0.5
           
           # --- نصب پلاگین‌های مورد نیاز فایل PDF ---
