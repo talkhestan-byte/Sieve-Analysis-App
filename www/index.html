@@ -204,7 +204,8 @@ const PRODUCT_ID = 'full_version_unlock';
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
 let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
-const MAX_FREE_TRIAL = 10;
+// تغییر تعداد محاسبه رایگان به 7 بار
+const MAX_FREE_TRIAL = 7;
 
 async function initBazaarPayment() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
@@ -427,17 +428,11 @@ function calculate(){
   
   if (cat === 'ریزدانه') {
       if (isCrushed) {
-          if (cls === 'ماسه رده3') {
-              max200 = 16; // ماسه رده 3 شکسته (بتن خودتراکم و سایر بتن‌ها)
-          } else {
-              max200 = 7;  // ماسه رده 1 و 2 شکسته (بتن خودتراکم و سایر بتن‌ها)
-          }
+          if (cls === 'ماسه رده3') max200 = 16;
+          else max200 = 7;
       } else {
-          if (cls === 'ماسه رده3') {
-              max200 = 5;  // ماسه رده 3 گردگوشه
-          } else {
-              max200 = 5;  // ماسه رده 1 و 2 گردگوشه (بتن خودتراکم و سایر بتن‌ها)
-          }
+          if (cls === 'ماسه رده3') max200 = 5;
+          else max200 = 5;
       }
   }
   // ========================================================
@@ -504,8 +499,6 @@ function calculate(){
       }
 
       const pct = passing200;
-      
-      // سقف‌های مجاز برای ۳ جمله
       let maxNormal, maxAbrasion;
       
       if (isCrushed) {
@@ -545,7 +538,7 @@ function calculate(){
           freeTrialCount++;
           localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
           if (freeTrialCount === MAX_FREE_TRIAL) {
-            alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+            alert("شما از ۷ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
           }
           drawChart();
           return;
@@ -702,12 +695,24 @@ async function exportPDF() {
         return;
     }
 
+    // درخواست نام فایل از کاربر
+    let defaultName = `گزارش_دانه_بندی_${$('sampleId').value || 'نمونه'}`;
+    let fileName = prompt("لطفاً نام فایل خروجی را وارد کنید:", defaultName);
+    
+    if (fileName === null) {
+        return; // کاربر لغو کرد
+    }
+    if (fileName.trim() === "") {
+        fileName = "گزارش_دانه_بندی"; // اگر خالی گذاشت
+    }
+
     try {
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
             const { Printer } = window.Capacitor.Plugins;
             if (Printer) {
                 const printHTML = buildPrintHTML();
-                await Printer.print({ content: printHTML, name: 'گزارش دانه بندی' });
+                // ارسال نام فایل به پلاگین چاپ
+                await Printer.print({ content: printHTML, name: fileName });
             } else {
                 alert('پلاگین چاپ پیدا نشد.');
             }
@@ -723,7 +728,6 @@ async function exportPDF() {
 function buildPrintHTML() {
     const chartDataUrl = $('gradingChart').toDataURL('image/png');
 
-    // محاسبه شرط‌های الک 200 برای برگه چاپی
     const isCrushed = $('materialName').value.includes('شکسته');
     const isSand = $('materialCategory').value === 'ریزدانه';
     let max200 = null;
@@ -830,11 +834,13 @@ function buildPrintHTML() {
                     text-align: center;
                     border: 1px solid #cbd5e1;
                     border-radius: 6px;
-                    padding: 5px;
+                    padding: 8px;
                     margin-bottom: 8px;
                     flex-grow: 1; /* پر کردن فضای باقیمانده */
+                    background: linear-gradient(145deg, #f4f9ff, #e6f0fa); /* بکگراند رنگی */
+                    box-shadow: inset 0 0 10px rgba(0, 103, 192, 0.05);
                 }
-                .chart-container img { width: 100%; height: 100%; max-height: 250px; object-fit: contain; }
+                .chart-container img { width: 100%; height: 100%; max-height: 300px; object-fit: contain; }
                 
                 .usage-message { padding: 4px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; font-weight: bold; border: 1px solid; }
                 .usage-message.allow { background: #ecfdf5; color: #086b42; border-color: #9edcbd; }
@@ -889,4 +895,4 @@ function buildPrintHTML() {
 </script>
 
 </body>
-</html>
+  </html>
