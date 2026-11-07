@@ -86,7 +86,7 @@ button:hover{filter:brightness(1.09)}
 
 /* استایل مخصوص چاپ (PDF) */
 @media print {
-  @page { size: A4 portrait; margin: 10mm; }
+  @page { size: A4 portrait; margin: 8mm; }
   body { background: #fff !important; color: #000; padding: 0; margin: 0; }
   .card { box-shadow: none !important; border: 1px solid #ccc !important; background: #fff !important; margin-bottom: 20px !important; page-break-inside: avoid; }
   .action-bar { display: none !important; } 
@@ -421,6 +421,27 @@ function calculate(){
 
   const r=ranges[cls]||{};
 
+  // ================== منطق دقیق شرط الک 200 ==================
+  let max200 = null;
+  const isCrushed = $('materialName').value.includes('شکسته');
+  
+  if (cat === 'ریزدانه') {
+      if (isCrushed) {
+          if (cls === 'ماسه رده3') {
+              max200 = 16; // ماسه رده 3 شکسته (بتن خودتراکم و سایر بتن‌ها)
+          } else {
+              max200 = 7;  // ماسه رده 1 و 2 شکسته (بتن خودتراکم و سایر بتن‌ها)
+          }
+      } else {
+          if (cls === 'ماسه رده3') {
+              max200 = 5;  // ماسه رده 3 گردگوشه
+          } else {
+              max200 = 5;  // ماسه رده 1 و 2 گردگوشه (بتن خودتراکم و سایر بتن‌ها)
+          }
+      }
+  }
+  // ========================================================
+
   for(const s of sieves){
     if (weights[s] !== null) {
       $('ret-'+s).textContent=retained[s].toFixed(1)+'%';
@@ -428,16 +449,27 @@ function calculate(){
       $('pas-'+s).textContent=passing[s].toFixed(1)+'%';
 
       let status='-';
-      if(r[s]){
-        let [lo,hi]=r[s];
-        status=passing[s]>=lo-1e-8&&passing[s]<=hi+1e-8?'منطبق':'نامنطبق';
+      let rangeText = '-';
+
+      if (s === '0.075' && cat === 'ریزدانه') {
+          rangeText = 'طبق پاورقی جدول ۱';
+          if (max200 !== null) {
+              status = passing200 <= max200 + 1e-8 ? 'منطبق' : 'نامنطبق';
+          }
+      } else if (r[s]) {
+          rangeText = r[s].join(' - ') + '٪';
+          status = passing[s] >= r[s][0] - 1e-8 && passing[s] <= r[s][1] + 1e-8 ? 'منطبق' : 'نامنطبق';
       }
-      $('cmp-'+s).textContent=status;
-      $('cmp-'+s).className=status==='منطبق'?'ok':status==='نامنطبق'?'not-ok':'';
+
+      $('rng-'+s).textContent = rangeText;
+      $('cmp-'+s).textContent = status;
+      $('cmp-'+s).className = status === 'منطبق' ? 'ok' : (status === 'نامنطبق' ? 'not-ok' : '');
+      
     } else {
       $('ret-'+s).textContent='-';
       $('cum-'+s).textContent='-';
       $('pas-'+s).textContent='-';
+      $('rng-'+s).textContent = (s === '0.075' && cat === 'ریزدانه') ? 'طبق پاورقی جدول ۱' : '-';
       $('cmp-'+s).textContent='-';
       $('cmp-'+s).className='';
     }
@@ -446,13 +478,12 @@ function calculate(){
   $('tvFm').textContent=cat==='ریزدانه' && !isNaN(fm) ? fm.toFixed(2) : '-';
   $('tvPassing200').textContent=total > 0 ? passing200.toFixed(2)+'%' : '-';
 
-  // ================== منطق نمایش هشدارها ==================
+  // ================== منطق نمایش هشدارها و جملات ==================
   const box = $('usageResults');
   box.replaceChildren(); 
   const warnBox = $('warnBox');
   warnBox.textContent = ''; 
 
-  // 1. هشدار اختلاف وزن (اگر بیش از 3 دهم درصد باشد)
   if (diff > tol) {
       const el1 = document.createElement('div');
       el1.className='usage-message deny'; 
@@ -464,9 +495,7 @@ function calculate(){
       el2.textContent = 'از نتایج این آزمون برای اهداف پذیرش استفاده نگردد (نتیجه مردود).';
       box.appendChild(el2);
   } else {
-      // 2. هشدار مدول نرمی (فقط برای ریزدانه)
       const panMismatch = hasPan && Math.abs(passing['0.075']-passing200) > 0.3;
-      
       if (cat === 'ریزدانه' && !isNaN(fm) && Math.abs(fm - base) > 0.2) {
           warnBox.textContent = 'اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.';
       }
@@ -474,13 +503,24 @@ function calculate(){
           warnBox.textContent += (warnBox.textContent ? ' | ' : '') + 'اختلاف عبوری الک ۰٫۰۷۵ میلی‌متر با افت شستشو بیش از ۰٫۳ واحد درصد است.';
       }
 
-      // 3. نمایش ۳ جمله شرطی
       const pct = passing200;
-      const crushed = $('materialName').value.includes('شکسته');
       
-      const maxNormal = crushed ? 7 : 5;
-      const maxAbrasion = crushed ? 5 : 3;
-      const maxFreeze = crushed ? 7 : 5;
+      // سقف‌های مجاز برای ۳ جمله
+      let maxNormal, maxAbrasion;
+      
+      if (isCrushed) {
+          if (cls === 'ماسه رده3') {
+              maxNormal = 16; maxAbrasion = 9;
+          } else {
+              maxNormal = 7; maxAbrasion = 5;
+          }
+      } else {
+          if (cls === 'ماسه رده3') {
+              maxNormal = 5; maxAbrasion = 3;
+          } else {
+              maxNormal = 5; maxAbrasion = 3;
+          }
+      }
 
       function add(name, allowed){
         const el=document.createElement('div');
@@ -490,7 +530,7 @@ function calculate(){
       }
 
       add('بتن مسلح و معمولی', pct <= maxNormal);
-      add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
+      add('بتن تحت شرایط ذوب و یخبندان', pct <= maxNormal);
       add('بتن تحت سایش', pct <= maxAbrasion);
   }
   // =======================================================
@@ -666,7 +706,6 @@ async function exportPDF() {
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
             const { Printer } = window.Capacitor.Plugins;
             if (Printer) {
-                // ساخت قالب HTML اختصاصی برای چاپ
                 const printHTML = buildPrintHTML();
                 await Printer.print({ content: printHTML, name: 'گزارش دانه بندی' });
             } else {
@@ -682,41 +721,61 @@ async function exportPDF() {
 }
 
 function buildPrintHTML() {
-    // گرفتن عکس از نمودار
     const chartDataUrl = $('gradingChart').toDataURL('image/png');
 
-    // جدول
+    // محاسبه شرط‌های الک 200 برای برگه چاپی
+    const isCrushed = $('materialName').value.includes('شکسته');
+    const isSand = $('materialCategory').value === 'ریزدانه';
+    let max200 = null;
+    if (isSand) {
+        if (isCrushed) {
+            max200 = lastResult.cls === 'ماسه رده3' ? 16 : 7;
+        } else {
+            max200 = 5;
+        }
+    }
+
     let tableHTML = '';
     for(const s of sieves) {
-        if(lastResult.weights[s] === null) continue; // فقط الک‌های وارد شده
+        if(lastResult.weights[s] === null) continue;
+        
         const r = ranges[lastResult.cls]?.[s];
         const ret = lastResult.retained[s] !== null ? lastResult.retained[s].toFixed(1) : '-';
         const cum = lastResult.cumulative[s] !== null ? lastResult.cumulative[s].toFixed(1) : '-';
         const pas = lastResult.passing[s] !== null ? lastResult.passing[s].toFixed(1) : '-';
-        const rangeTxt = r ? r.join(' - ') + '٪' : '—';
-        const status = $('cmp-'+s).textContent;
-
-        let statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
+        
+        let rangeTxt = r ? r.join(' - ') + '٪' : '—';
+        let status = '—';
+        
+        if (s === '0.075' && isSand) {
+            rangeTxt = 'طبق پاورقی جدول ۱';
+            if (max200 !== null) {
+                status = lastResult.passing200 <= max200 + 1e-8 ? 'منطبق' : 'نامنطبق';
+            }
+        } else if (r) {
+            status = lastResult.passing[s] >= r[0] - 1e-8 && lastResult.passing[s] <= r[1] + 1e-8 ? 'منطبق' : 'نامنطبق';
+        }
+        
+        const statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
 
         tableHTML += `
             <tr>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${lastResult.weights[s]}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${ret}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${cum}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; font-weight:bold;">${pas}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;">${rangeTxt}</td>
-                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center; color:${statusColor}; font-weight:bold;">${status}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${lastResult.weights[s]}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${ret}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${cum}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold;">${pas}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center;">${rangeTxt}</td>
+                <td style="border:1px solid #cbd5e1; padding:4px; text-align:center; color:${statusColor}; font-weight:bold;">${status}</td>
             </tr>
         `;
     }
 
-    // جملات شرطی
     let messagesHTML = '';
     const usageBox = $('usageResults');
     if (usageBox.innerHTML.trim() !== '') {
-        messagesHTML = `<div style="margin-top: 20px; padding: 15px; border: 2px dashed #b8d2ee; border-radius: 8px; background: #f8fafc;">
-            ${usageBox.innerHTML}
+        messagesHTML = `<div style="margin-top: 8px; padding: 6px; border: 1px dashed #b8d2ee; border-radius: 6px; background: #f8fafc; font-size:10px;">
+            ${usageBox.innerHTML.replace(/class="usage-message/g, 'style="font-size:10px; padding:4px; margin-bottom:2px; display:block;" class="usage-message')}
         </div>`;
     }
 
@@ -727,58 +786,57 @@ function buildPrintHTML() {
             <meta charset="UTF-8">
             <title>گزارش دانه بندی</title>
             <style>
-                @page { size: A4 portrait; margin: 10mm; }
+                @page { size: A4 portrait; margin: 5mm; }
                 body { font-family: Tahoma, Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; direction: rtl; }
                 .page {
-                    border: 3px solid #124a9c;
-                    border-radius: 12px;
-                    padding: 20px;
-                    min-height: 95vh;
+                    border: 2px solid #124a9c;
+                    border-radius: 8px;
+                    padding: 10px;
+                    height: 98vh;
                     background: #fff;
-                    box-shadow: inset 0 0 15px rgba(0, 103, 192, 0.1);
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .header-title {
                     text-align: center;
                     color: #124a9c;
-                    border-bottom: 2px solid #b9d6f4;
-                    padding-bottom: 15px;
-                    margin-bottom: 20px;
+                    border-bottom: 1px solid #b9d6f4;
+                    padding-bottom: 5px;
+                    margin-bottom: 8px;
                 }
-                .header-title h1 { margin: 0; font-size: 22px; }
-                .header-title h2 { margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: normal; }
+                .header-title h1 { margin: 0; font-size: 16px; }
+                .header-title h2 { margin: 2px 0 0; font-size: 10px; color: #64748b; font-weight: normal; }
                 
                 .info-box {
                     display: grid;
                     grid-template-columns: repeat(4, 1fr);
-                    gap: 10px;
+                    gap: 5px;
                     background: #f0f7ff;
                     border: 1px solid #cbd5e1;
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 25px;
-                    font-size: 12px;
+                    border-radius: 6px;
+                    padding: 6px;
+                    margin-bottom: 8px;
+                    font-size: 10px;
                 }
-                .info-item {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 5px;
-                }
-                .info-item .label { color: #64748b; font-weight: bold; font-size: 11px; }
-                .info-item .value { font-weight: bold; color: #0f172a; font-size: 13px; }
+                .info-item { display: flex; flex-direction: column; gap: 2px; }
+                .info-item .label { color: #64748b; font-weight: bold; font-size: 9px; }
+                .info-item .value { font-weight: bold; color: #0f172a; font-size: 11px; }
 
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-                th { background: #124a9c; color: white; padding: 8px; border: 1px solid #0f172a; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9px; }
+                th { background: #124a9c; color: white; padding: 4px; border: 1px solid #0f172a; text-align: center; font-weight:bold; }
                 
                 .chart-container {
                     text-align: center;
                     border: 1px solid #cbd5e1;
-                    border-radius: 8px;
-                    padding: 10px;
-                    margin-bottom: 20px;
+                    border-radius: 6px;
+                    padding: 5px;
+                    margin-bottom: 8px;
+                    flex-grow: 1; /* پر کردن فضای باقیمانده */
                 }
-                .chart-container img { width: 100%; max-height: 350px; object-fit: contain; }
+                .chart-container img { width: 100%; height: 100%; max-height: 250px; object-fit: contain; }
                 
-                .usage-message { padding: 10px; margin-bottom: 5px; border-radius: 5px; font-size: 12px; font-weight: bold; border: 1px solid; }
+                .usage-message { padding: 4px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; font-weight: bold; border: 1px solid; }
                 .usage-message.allow { background: #ecfdf5; color: #086b42; border-color: #9edcbd; }
                 .usage-message.deny { background: #fef2f2; color: #a11c2b; border-color: #f0a7ad; }
             </style>
@@ -796,7 +854,7 @@ function buildPrintHTML() {
                     <div class="info-item"><span class="label">تاریخ</span><span class="value">${$('date').value || '—'}</span></div>
                     <div class="info-item"><span class="label">نام سنگدانه</span><span class="value">${$('materialName').value}</span></div>
                     <div class="info-item"><span class="label">رده دانه بندی</span><span class="value">${lastResult.cls}</span></div>
-                    <div class="info-item"><span class="label">وزن کل نمونه (gr)</span><span class="value">${lastResult.total}</span></div>
+                    <div class="info-item"><span class="label">وزن کل (gr)</span><span class="value">${lastResult.total}</span></div>
                     <div class="info-item"><span class="label">وزن بعد از شستشو (gr)</span><span class="value">${lastResult.after}</span></div>
                     <div class="info-item"><span class="label">مدول نرمی مبنا</span><span class="value">${$('baseModulus').value || '—'}</span></div>
                 </div>
