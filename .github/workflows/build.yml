@@ -59,57 +59,65 @@ jobs:
         run: |
           set -eu
 
-          # 1. ساخت فایل تنظیمات کپسیتور
           rm -f capacitor.config.ts capacitor.config.json
           cat > capacitor.config.json <<'EOF'
           {
-            "appId": "com.yourname.sieveanalysis",
-            "appName": "Sieve Analysis",
-            "webDir": "www"
+          "appId": "com.yourname.sieveanalysis",
+          "appName": "Sieve Analysis",
+          "webDir": "www"
           }
           EOF
 
-          # 2. ساخت پروژه اندروید و سینک
           npx cap add android
           npx cap sync android
 
-          # 3. اضافه کردن مخزن JitPack برای پلاگین کافه‌بازار
+          # افزودن JitPack
           PROJECT_GRADLE="android/build.gradle"
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
-            sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
+          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
-          echo "JitPack repository injected."
 
-          # 4. اعمال آیکون‌های سفارشی از پوشه assets
+          # ============================================
+          # اعمال آیکون‌ها روی همه سایزهای اندروید
+          # ============================================
           echo "Applying custom icons..."
           if [ -d "assets" ]; then
-            # آیکون پایه (Legacy)
-            if [ -f "assets/icon-only.png" ]; then
-              cp "assets/icon-only.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-              cp "assets/icon-only.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
-            fi
-            
-            # آیکون‌های Adaptive (اندروید 8 به بالا)
-            mkdir -p android/app/src/main/res/mipmap-anydpi-v26/
-            cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          RES_DIR="android/app/src/main/res"
+      
+          # 1. کپی آیکون‌های معمولی در تمام سایزها
+          if [ -f "assets/icon-only.png" ]; then
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+          cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher.png"
+          cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher_round.png"
+          done
+          fi
+      
+          # 2. کپی آیکون‌های Adaptive در تمام سایزها
+          if [ -f "assets/icon-background.png" ]; then
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+          cp "assets/icon-background.png" "$RES_DIR/$d/ic_launcher_background.png"
+          done
+          fi
+          if [ -f "assets/icon-foreground.png" ]; then
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+          cp "assets/icon-foreground.png" "$RES_DIR/$d/ic_launcher_foreground.png"
+          done
+          fi
+      
+          # 3. ساخت فایل XML برای معرفی آیکون Adaptive (مخصوص اندروید 8+)
+          mkdir -p "$RES_DIR/mipmap-anydpi-v26/"
+          cat > "$RES_DIR/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@mipmap/ic_launcher_background" />
-              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+          <background android:drawable="@mipmap/ic_launcher_background" />
+          <foreground android:drawable="@mipmap/ic_launcher_foreground" />
           </adaptive-icon>
           EOF
-
-            if [ -f "assets/icon-background.png" ]; then
-              cp "assets/icon-background.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png
-            fi
-            if [ -f "assets/icon-foreground.png" ]; then
-              cp "assets/icon-foreground.png" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
-            fi
-            echo "Icons applied successfully."
+    
+          echo "All icons applied to all mipmap directories."
           else
-            echo "Warning: assets folder not found. Using default Capacitor icon."
+          echo "Warning: assets folder not found. Using default Capacitor icon."
           fi
-
       - name: Build Debug APK
         run: |
           set -eu
