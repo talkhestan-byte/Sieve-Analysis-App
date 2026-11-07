@@ -31,28 +31,23 @@ jobs:
       - name: Prepare web app
         run: |
           set -eu
-          
-          # 1. بررسی وجود فایل اصلی
           test -s www/index.html
-          
-          # 2. راه‌اندازی npm و نصب پکیج‌ها
           npm init -y
           npm install @capacitor/core@6 @capacitor/android@6
           npm install --save-dev @capacitor/cli@6 typescript esbuild
           npm install @salarizadi/capacitor-cafebazaar-poolakey
-          npm install @capacitor/filesystem@6
-          npm install @capacitor-community/file-opener@6.0.1
-          npm install @bcyesil/capacitor-plugin-printer@0.0.5
-          npm install html2pdf.js
+          
+          # --- نصب پلاگین‌های مورد نیاز فایل PDF ---
           npm install @capacitor/filesystem@6
           npm install @capacitor-community/file-opener@6.0.1
           
-          # 3. باندل کردن فایل native-pdf.js (اگر وجود داشته باشد)
+          npm install @bcyesil/capacitor-plugin-printer@0.0.5
+          npm install html2pdf.js
+
           if [ -f www/native-pdf.js ]; then
             npx esbuild www/native-pdf.js --bundle --format=esm --outfile=www/native-pdf.bundle.js
           fi
 
-          # 4. کپی کتابخانه‌های جانبی
           if [ -d "node_modules/html2pdf.js/dist" ]; then
             cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/ 2>/dev/null || true
           fi
@@ -61,7 +56,6 @@ jobs:
         run: |
           set -eu
 
-          # 1. ساخت فایل تنظیمات کپسیتور
           rm -f capacitor.config.ts capacitor.config.json
           cat > capacitor.config.json <<'EOF'
           {
@@ -71,41 +65,33 @@ jobs:
           }
           EOF
 
-          # 2. ساخت پروژه اندروید و سینک
+          # ۱. ساخت پروژه اندروید
           npx cap add android
+          
+          # ۲. انتقال پلاگین‌ها به پروژه اندروید (باید بعد از نصب پلاگین‌ها باشد)
           npx cap sync android
 
-          # 3. اضافه کردن مخزن JitPack برای پلاگین کافه‌بازار
+          # ۳. اضافه کردن مخزن JitPack
           PROJECT_GRADLE="android/build.gradle"
           if ! grep -q "jitpack.io" "$PROJECT_GRADLE"; then
             sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        maven { url "https:\/\/jitpack.io" }/' "$PROJECT_GRADLE"
           fi
-          echo "JitPack repository injected."
 
-          # 4. اعمال آیکون‌های سفارشی از پوشه assets
-          echo "Applying custom icons..."
+          # ۴. اعمال آیکون‌ها
           if [ -d "assets" ]; then
             RES_DIR="android/app/src/main/res"
-            
-            # کپی آیکون‌ها به تمام سایزهای مورد نیاز اندروید
-            if [ -f "assets/icon-only.png" ]; then
-              for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              if [ -f "assets/icon-only.png" ]; then
                 cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher.png"
                 cp "assets/icon-only.png" "$RES_DIR/$d/ic_launcher_round.png"
-              done
-            fi
-            if [ -f "assets/icon-background.png" ]; then
-              for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              fi
+              if [ -f "assets/icon-background.png" ]; then
                 cp "assets/icon-background.png" "$RES_DIR/$d/ic_launcher_background.png"
-              done
-            fi
-            if [ -f "assets/icon-foreground.png" ]; then
-              for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              fi
+              if [ -f "assets/icon-foreground.png" ]; then
                 cp "assets/icon-foreground.png" "$RES_DIR/$d/ic_launcher_foreground.png"
-              done
-            fi
-            
-            # ساخت فایل XML برای معرفی آیکون Adaptive
+              fi
+            done
             mkdir -p "$RES_DIR/mipmap-anydpi-v26/"
             cat > "$RES_DIR/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
@@ -114,9 +100,6 @@ jobs:
               <foreground android:drawable="@mipmap/ic_launcher_foreground" />
           </adaptive-icon>
           EOF
-            echo "Icons applied successfully."
-          else
-            echo "Warning: assets folder not found. Using default Capacitor icon."
           fi
 
       - name: Build Debug APK
@@ -130,100 +113,6 @@ jobs:
           mkdir -p output
           cp android/app/build/outputs/apk/debug/app-debug.apk output/Sieve-Analysis-debug.apk
 
-      # ==========================================================
-      # بخش‌های زیر برای ساخت فایل‌های دیگر خاموش شده‌اند 
-      # (با استفاده از if: false) تا فقط APK ساخته شود
-      # ==========================================================
-
-      - name: Restore persistent signing key
-        if: false
-        env:
-          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
-        run: |
-          set -eu
-          test -n "$KEYSTORE_BASE64" || { echo "Missing SIGNING_KEYSTORE_BASE64 secret"; exit 1; }
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
-          test -s android/app/release-key.jks
-
-      - name: Configure release signing
-        if: false
-        env:
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: |
-          set -eu
-          test -n "$SIGNING_STORE_PASSWORD"
-          test -n "$SIGNING_KEY_ALIAS"
-          test -n "$SIGNING_KEY_PASSWORD"
-          cat > android/app/signing.gradle <<'EOF'
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file("release-key.jks")
-                      storePassword System.getenv("SIGNING_STORE_PASSWORD")
-                      keyAlias System.getenv("SIGNING_KEY_ALIAS")
-                      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-          EOF
-          if ! grep -q "signing.gradle" android/app/build.gradle; then
-            echo "" >> android/app/build.gradle
-            echo "apply from: 'signing.gradle'" >> android/app/build.gradle
-          fi
-
-      - name: Build signed release AAB
-        if: false
-        env:
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: |
-          set -eu
-          cd android
-          ./gradlew bundleRelease
-          test -s app/build/outputs/bundle/release/app-release.aab
-          cd ..
-          cp android/app/build/outputs/bundle/release/app-release.aab output/Sieve-Analysis.aab
-
-      - name: Download official Cafe Bazaar Bundle Signer
-        if: false
-        run: |
-          set -eu
-          curl --fail --location --silent --show-error \
-            https://github.com/cafebazaar/bundle-signer/releases/download/v0.1.13/bundlesigner-0.1.13.jar \
-            --output bundlesigner.jar
-          test -s bundlesigner.jar
-
-      - name: Generate Cafe Bazaar BIN
-        if: false
-        env:
-          KS_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-        run: |
-          set -eu
-          java -jar bundlesigner.jar genbin \
-            --verbose \
-            --bundle android/app/build/outputs/bundle/release/app-release.aab \
-            --bin output \
-            --v2-signing-enabled true \
-            --v3-signing-enabled false \
-            --ks android/app/release-key.jks \
-            --ks-type PKCS12 \
-            --ks-key-alias "$KEY_ALIAS" \
-            --ks-pass "env:KS_PASS" \
-            --key-pass "env:KEY_PASS"
-
-      # ==========================================================
-      # تغییر در آپلود: فقط فایل APK آپلود می‌شود
-      # ==========================================================
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
