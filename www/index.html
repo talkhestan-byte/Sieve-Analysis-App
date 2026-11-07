@@ -7,7 +7,8 @@
 <style>
 :root{--primary:#0067c0;--bg:#f4f7fb;--border:#cbd5e1;--success:#059669;--danger:#dc2626}
 *{box-sizing:border-box}
-body{font:13px Tahoma,Arial,sans-serif;background:var(--bg);margin:0;padding:12px;color:#1e293b}
+/* اضافه شدن ویژگی زوم لمسی به body */
+body{font:13px Tahoma,Arial,sans-serif;background:var(--bg);margin:0;padding:12px;color:#1e293b; touch-action: pan-x pan-y pinch-zoom;}
 .card{background:white;border-radius:10px;padding:14px;margin:0 auto 14px;max-width:1000px;box-shadow:0 2px 8px #0001}
 h2{text-align:center;color:var(--primary);font-size:17px;margin:2px 0 16px}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:6px 8px;margin-bottom:7px}
@@ -759,7 +760,6 @@ function buildPrintHTML() {
         
         const statusColor = status === 'منطبق' ? '#086b42' : (status === 'نامنطبق' ? '#a11c2b' : '#475569');
 
-        // ارتفاع جدول کمتر (پدینگ کمتر)، عرض بیشتر (پدینگ افقی بیشتر)
         tableHTML += `
             <tr>
                 <td style="border:1px solid #cbd5e1; padding:2px 8px; text-align:center; font-weight:bold;">${sieveLabels[s] || s}</td>
@@ -840,7 +840,6 @@ function buildPrintHTML() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    /* عرض کامل و ارتفاع کمتر (معادل 3 خط متن کمتر) */
                     width: 100%; 
                     height: 280px; 
                 }
