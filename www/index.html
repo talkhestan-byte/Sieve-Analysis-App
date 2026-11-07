@@ -183,7 +183,7 @@ button:hover{filter:brightness(1.09)}
 
   <div class="action-bar">
     <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="window.print()">خروجی PDF</button>
+    <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
     <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
   </div>
 </div>
@@ -654,6 +654,31 @@ window.addEventListener('resize',drawChart);
 buildTable();
 toggleCategoryFields();
 document.addEventListener('DOMContentLoaded', initBazaarPayment);
+// ================== چاپ بومی اندروید ==================
+async function exportPDF() {
+    try {
+        // بررسی اینکه آیا در محیط بومی Capacitor هستیم
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            // استفاده از پلاگین چاپ بومی
+            const { Printer } = window.Capacitor.Plugins;
+            if (Printer) {
+                await Printer.printWebView({
+                    name: 'گزارش آزمایش دانه بندی سنگدانه'
+                });
+            } else {
+                // اگر پلاگین پیدا نشد، به روش قبلی برگرد
+                window.print();
+            }
+        } else {
+            // در مرورگر (حالت تست) از چاپ معمولی استفاده کن
+            window.print();
+        }
+    } catch (error) {
+        console.error('PDF Error:', error);
+        alert('خطا در ایجاد خروجی PDF. لطفاً دوباره تلاش کنید.');
+    }
+}
+// =======================================================  
 </script>
 
 </body>
