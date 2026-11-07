@@ -214,8 +214,8 @@ const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
 const PRODUCT_ID = 'full_version_unlock'; 
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
-let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 15);
-const MAX_FREE_TRIAL = 15;
+let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 7);
+const MAX_FREE_TRIAL = 7;
 
 async function initBazaarPayment() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CafebazaarPoolakey) {
