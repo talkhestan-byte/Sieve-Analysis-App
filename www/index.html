@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>تحلیل دانه‌بندی سنگدانه - ۴۹۷۷</title>
-<!-- اضافه کردن کتابخانه html2pdf برای ساخت فایل PDF -->
-<script src="html2pdf.bundle.min.js"></script>
 <style>
 :root{--primary:#0067c0;--bg:#f4f7fb;--border:#cbd5e1;--success:#059669;--danger:#dc2626}
 *{box-sizing:border-box}
@@ -86,24 +84,25 @@ button:hover{filter:brightness(1.09)}
 .chart-wrap{border:1px solid #d6e3f1;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);padding:4px;box-shadow:inset 0 1px 3px #153f7010}
 .chart-wrap canvas{height:350px;width:100%;display:block}
 
-/* استایل‌های مخفی‌سازی برای ساخت PDF تمیز */
-.pdf-only { display: none; }
+/* کم‌رنگ کردن پلیس‌هولدرها */
+::placeholder {
+  color: #94a3b8 !important; /* رنگ خاکستری کم‌رنگ */
+  opacity: 0.6 !important; 
+  font-size: 12px;
+}
+
+/* استایل مخصوص چاپ (PDF) */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: #fff !important; color: #000; padding: 0; margin: 0; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; background: #fff !important; margin-bottom: 20px !important; page-break-inside: avoid; }
+  .action-bar { display: none !important; } 
+  .chart-wrap { border: none !important; }
+}
 </style>
 </head>
 
 <body>
-
-<!-- این بخش در صفحه دیده نمی‌شود و فقط برای ساخت PDF استفاده می‌شود -->
-<div id="pdf-wrapper" class="pdf-only" style="font-family: Tahoma, Arial, sans-serif; direction: rtl; background: white; padding: 20px;">
-  <h2 style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px;">گزارش دانه‌بندی سنگدانه</h2>
-  <div id="pdf-meta" style="margin-bottom: 20px; font-size: 14px;"></div>
-  <table id="pdf-table" style="width: 100%; border-collapse: collapse; text-align: center; border: 1px solid #000;"></table>
-  <div id="pdf-results" style="margin-top: 20px; font-size: 14px; font-weight: bold;"></div>
-  <div id="pdf-usage" style="margin-top: 20px;"></div>
-  <div id="pdf-chart-container" style="margin-top: 20px; text-align: center;">
-    <img id="pdf-chart-image" style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-  </div>
-</div>
 
 <div class="card">
   <h2 class="app-title">
@@ -191,7 +190,7 @@ button:hover{filter:brightness(1.09)}
 
   <div class="action-bar">
     <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="exportPDF()">خروجی PDF</button>
+    <button class="btn-pdf" onclick="printPage()">خروجی PDF</button>
     <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
   </div>
 </div>
@@ -205,9 +204,6 @@ button:hover{filter:brightness(1.09)}
 
 <script>
 'use strict';
-
-const { Filesystem, Directory } = window.Capacitor ? window.Capacitor.Plugins : {};
-const { FileOpener } = window.Capacitor ? window.Capacitor.Plugins : {};
 
 // ================== تنظیمات پرداخت کافه‌بازار ==================
 const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE'; 
@@ -309,6 +305,33 @@ function number(id){
   const v=normalizeDigits($(id).value);
   return v.trim()===''?NaN:Number(v);
 }
+
+// ================== تابع چاپ اختصاصی و بدون خطا ==================
+function printPage() {
+    // ایجاد یک iframe مخفی برای جلوگیری از خطای ری‌لود صفحه
+    var iframe = document.createElement('iframe');
+    iframe.style.position = "absolute";
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+    
+    var doc = iframe.contentWindow.document;
+    // کپی کردن استایل‌ها و محتوای صفحه فعلی
+    var styles = document.querySelector('style').innerHTML;
+    var content = document.body.innerHTML;
+    
+    doc.open();
+    doc.write('<html dir="rtl"><head><style>' + styles + '</style></head><body>' + content + '</body></html>');
+    doc.close();
+    
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(function() { document.body.removeChild(iframe); }, 1000);
+    };
+}
+// ===================================================================
 
 function buildTable(){
   const body=$('sieveBody');
@@ -459,11 +482,10 @@ function calculate(){
 
   // ================== منطق جدید پیام‌ها ==================
   const box = $('usageResults');
-  box.replaceChildren(); // پاک کردن پیام‌های قبلی
+  box.replaceChildren(); 
   const warnBox = $('warnBox');
-  warnBox.textContent = ''; // پاک کردن هشدارهای قبلی
+  warnBox.textContent = ''; 
 
-  // 1. بررسی اختلاف وزن (مستقل از بقیه)
   if (diff > tol) {
       const el1 = document.createElement('div');
       el1.className='usage-message deny'; 
@@ -475,7 +497,6 @@ function calculate(){
       el2.textContent = 'از نتایج این آزمون برای اهداف پذیرش استفاده نگردد (نتیجه مردود).';
       box.appendChild(el2);
   } else {
-      // اگر اختلاف وزن مجاز بود، 3 جمله شرطی را نمایش بده
       const pct = passing200;
       const crushed = $('materialName').value.includes('شکسته');
       
@@ -495,24 +516,17 @@ function calculate(){
       add('بتن تحت سایش', pct <= maxAbrasion);
   }
 
-  // 2. بررسی اختلاف مدول نرمی (مستقل، همیشه چک می‌شود)
-  if (cat==='ریزدانه' && !isNaN(fm) && Math.abs(fm-base) > 0.2) {
-      warnBox.textContent = 'اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.'; // پیام خطای قرمز رنگ
-  }
-  // =======================================================
-
   lastResult={
     weights,retained,cumulative,passing,passing200,fm,
     total,after,cls,cat,diff,tol,hasPan
   };
 
-  // ================== بررسی وضعیت پرداخت ==================
   if (!isPurchased) {
       if (freeTrialCount < MAX_FREE_TRIAL) {
           freeTrialCount++;
           localStorage.setItem('app_free_trial_count', freeTrialCount.toString());
           if (freeTrialCount === MAX_FREE_TRIAL) {
-            alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
+            alert("شما از 7 بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
           }
           drawChart();
           return;
@@ -526,7 +540,6 @@ function calculate(){
           return;
       }
   }
-  // =========================================================
 
   drawChart();
 }
@@ -644,125 +657,6 @@ function resetAll(){
   $('baseModulus').value='2.90';
   invalidate();
 }
-
-// ================== تابع جدید خروجی PDF ==================
-async function exportPDF() {
-    if (!lastResult) {
-        alert('ابتدا اطلاعات را وارد کنید و دکمه محاسبه را بزنید.');
-        return;
-    }
-
-    const btn = document.querySelector('.btn-pdf');
-    const originalText = btn.textContent;
-    btn.textContent = 'در حال ساخت...';
-    btn.disabled = true;
-
-    try {
-        // 1. پر کردن قالب مخفی PDF با داده‌های فعلی
-        document.getElementById('pdf-meta').innerHTML = `
-            <strong>نام شرکت:</strong> ${$('company').value || '—'} &nbsp;&nbsp; | &nbsp;&nbsp;
-            <strong>شماره نمونه:</strong> ${$('sampleId').value || '—'} &nbsp;&nbsp; | &nbsp;&nbsp;
-            <strong>تاریخ:</strong> ${$('date').value || '—'} <br><br>
-            <strong>نام سنگدانه:</strong> ${$('materialName').value} &nbsp;&nbsp; | &nbsp;&nbsp;
-            <strong>کلاس:</strong> ${lastResult.cls} <br><br>
-            <strong>وزن کل:</strong> ${lastResult.total} گرم &nbsp;&nbsp; | &nbsp;&nbsp;
-            <strong>وزن بعد از شستشو:</strong> ${lastResult.after} گرم
-        `;
-        
-        let tableHtml = `<tr>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">الک</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">وزن مانده</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">مانده (%)</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">تجمعی (%)</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">عبوری (%)</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">محدوده مجاز</th>
-            <th style="border: 1px solid #000; padding: 5px; background: #eee;">انطباق</th>
-        </tr>`;
-        
-        sieves.forEach(s => {
-            if (lastResult.weights[s] !== null) {
-                const r = ranges[lastResult.cls]?.[s];
-                tableHtml += `<tr>
-                    <td style="border: 1px solid #000; padding: 5px;">${sieveLabels[s]}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${lastResult.weights[s]}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${lastResult.retained[s].toFixed(1)}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${lastResult.cumulative[s].toFixed(1)}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${lastResult.passing[s].toFixed(1)}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${r ? r.join(' - ') : '—'}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${$('cmp-'+s).textContent}</td>
-                </tr>`;
-            }
-        });
-        document.getElementById('pdf-table').innerHTML = tableHtml;
-
-        document.getElementById('pdf-results').innerHTML = `
-            <strong>مدول نرمی:</strong> ${lastResult.cat==='ریزدانه' ? lastResult.fm.toFixed(2) : '—'} &nbsp;&nbsp; | &nbsp;&nbsp;
-            <strong>عبوری از الک ۲۰۰:</strong> ${lastResult.passing200.toFixed(2)}%
-        `;
-
-        // کپی کردن پیام‌های شرطی
-        const usageResults = $('usageResults').innerHTML;
-        document.getElementById('pdf-usage').innerHTML = usageResults;
-        
-        // کپی کردن هشدار مدول نرمی
-        const warnBoxText = $('warnBox').textContent;
-        if(warnBoxText) {
-            document.getElementById('pdf-usage').innerHTML += `<p style="color:red; font-weight:bold; margin-top:10px;">${warnBoxText}</p>`;
-        }
-
-        // 2. کپی کردن عکس نمودار
-        const canvas = document.getElementById('gradingChart');
-        const imgData = canvas.toDataURL('image/png');
-        document.getElementById('pdf-chart-image').src = imgData;
-
-        // 3. تبدیل به PDF با html2pdf
-        const element = document.getElementById('pdf-wrapper');
-        element.style.display = 'block'; // موقتاً نمایان شود تا html2pdf آن را ببیند
-
-        const opt = {
-            margin:       10,
-            filename:     'Sieve-Analysis-Report.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // تولید فایل PDF به صورت Base64
-        const pdfBase64 = await html2pdf().set(opt).from(element).output('datauristring');
-        
-        element.style.display = 'none'; // مخفی کردن مجدد
-
-        // 4. ذخیره فایل و باز کردن آن با برنامه پیش‌فرض
-        const base64Data = pdfBase64.split(',')[1];
-        
-        if (window.Capacitor && Filesystem && FileOpener) {
-            const result = await Filesystem.writeFile({
-                path: 'Sieve-Analysis-Report.pdf',
-                data: base64Data,
-                directory: Directory.Cache // ذخیره در پوشه موقت
-            });
-
-            await FileOpener.open({
-                filePath: result.uri,
-                contentType: 'application/pdf'
-            });
-        } else {
-            // برای تست در مرورگر
-            const link = document.createElement('a');
-            link.href = pdfBase64;
-            link.download = 'Sieve-Analysis-Report.pdf';
-            link.click();
-        }
-
-    } catch (error) {
-        console.error('PDF Error:', error);
-        alert('خطا در ساخت فایل PDF: ' + error.message);
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-}
-// =======================================================
 
 $('spClass').addEventListener('change',updateRanges);
 $('materialName').addEventListener('change',invalidate);
