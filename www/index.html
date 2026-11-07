@@ -529,8 +529,12 @@ function calculate(){
 
       const pct = passing200;
       let maxNormal, maxAbrasion;
-      
-      if (isCrushed) {
+
+      if (cat === 'درشت‌دانه') {
+          const gravelLimit = isCrushed ? 1.5 : 1.0;
+          maxNormal = gravelLimit;
+          maxAbrasion = gravelLimit;
+      } else if (isCrushed) {
           if (cls === 'ماسه رده3') {
               maxNormal = 16; maxAbrasion = 9;
           } else {
@@ -554,17 +558,6 @@ function calculate(){
       add('بتن مسلح و معمولی', pct <= maxNormal);
       add('بتن تحت شرایط ذوب و یخبندان', pct <= maxNormal);
       add('بتن تحت سایش', pct <= maxAbrasion);
-
-      // ================== جملات شرطی برای درشت‌دانه ==================
-      if (cat === 'درشت‌دانه') {
-          const maxGravel200 = isCrushed ? 1.5 : 1.0;
-          const allowed200 = passing200 <= maxGravel200 + 1e-8;
-          const msg = document.createElement('div');
-          msg.className = 'usage-message ' + (allowed200 ? 'allow' : 'deny');
-          msg.textContent = `این سنگدانه برای استفاده در بتن‌های مسلح و معمولی با توجه به درصد عبوری از الک ۲۰۰ ${allowed200 ? 'مجاز است' : 'ممنوع است'} (حداکثر ${isCrushed ? '۱٫۵' : '۱٫۰'} درصد).`;
-          box.appendChild(msg);
-      }
-      // ========================================================
   }
   // =======================================================
 
