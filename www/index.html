@@ -22,7 +22,7 @@ th,td{border:1px solid #e2e8f0;padding:7px 3px;text-align:center}
 th{background:#f1f5f9}
 td input.numeric{width:8ch;max-width:100%;padding:6px 2px;text-align:center;direction:ltr;border:1px solid var(--border);border-radius:4px;font:12px Arial,sans-serif}
 .results-box{display:flex;gap:10px;justify-content:space-around;flex-wrap:wrap;background:#e0f2fe;padding:12px;border-radius:8px;margin-top:12px;font-weight:bold;color:#0369a1}
-.warning-box{color:var(--danger);font-size:12px;margin-top:10px;line-height:1.9}
+.warning-box{color:var(--danger);font-size:13px;margin-top:10px;line-height:1.9; font-weight: bold;}
 .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 button{flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:8px;color:white;font:bold 13px Tahoma;cursor:pointer}
 .btn-calc{background:var(--success)}.btn-pdf{background:var(--primary)}.btn-reset{background:#64748b}
@@ -89,7 +89,7 @@ button:hover{filter:brightness(1.09)}
   @page { size: A4 portrait; margin: 10mm; }
   body { background: #fff !important; color: #000; padding: 0; margin: 0; }
   .card { box-shadow: none !important; border: 1px solid #ccc !important; background: #fff !important; margin-bottom: 20px !important; page-break-inside: avoid; }
-  .action-bar { display: none !important; } /* دکمه‌ها در PDF چاپ نشوند */
+  .action-bar { display: none !important; } 
   .chart-wrap { border: none !important; }
 }
 </style>
@@ -183,7 +183,7 @@ button:hover{filter:brightness(1.09)}
 
   <div class="action-bar">
     <button class="btn-calc" onclick="calculate()">محاسبه</button>
-    <button class="btn-pdf" onclick="window.print()">خروجی PDF</button>
+    <button class="btn-pdf" onclick="printPage()">خروجی PDF</button>
     <button class="btn-reset" onclick="resetAll()">بازنشانی</button>
   </div>
 </div>
@@ -203,7 +203,6 @@ const BAZAAR_RSA_PUBLIC_KEY = 'YOUR_RSA_PUBLIC_KEY_HERE';
 const PRODUCT_ID = 'full_version_unlock'; 
 
 let isPurchased = localStorage.getItem('app_purchased') === 'true';
-// تعداد دفعات استفاده رایگان
 let freeTrialCount = parseInt(localStorage.getItem('app_free_trial_count') || '0', 10);
 const MAX_FREE_TRIAL = 10;
 
@@ -300,6 +299,32 @@ function number(id){
   return v.trim()===''?NaN:Number(v);
 }
 
+// ================== تابع چاپ (مخصوص موبایل) ==================
+function printPage() {
+    // این روش در وب‌ویوهای اندروید ۱۰۰٪ جواب می‌دهد
+    var iframe = document.createElement('iframe');
+    iframe.style.position = "absolute";
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+    
+    var doc = iframe.contentWindow.document;
+    var styles = document.querySelector('style').innerHTML;
+    var content = document.body.innerHTML;
+    
+    doc.open();
+    doc.write('<html><head><style>' + styles + '</style></head><body>' + content + '</body></html>');
+    doc.close();
+    
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(function() { document.body.removeChild(iframe); }, 1000);
+    };
+}
+// ============================================================
+
 function buildTable(){
   const body=$('sieveBody');
   body.innerHTML='';
@@ -383,7 +408,7 @@ function calculate(){
 
   const washLoss=total-after;
   const diff=Math.abs(after-sum);
-  const tol=total*.003;
+  const tol=total*0.003; // 3 دهم درصد (0.003)
   const passing200=washLoss/total*100;
   
   let retained={}, cumulative={}, passing={};
@@ -420,14 +445,6 @@ function calculate(){
   });
   const fm = fmCount > 0 ? (fmSum / 100) : NaN;
 
-  let warnings=[];
-  const panMismatch=hasPan&&Math.abs(passing['0.075']-passing200)>.3;
-  const acceptanceValid=diff<=tol&&!panMismatch;
-
-  if(diff>tol) warnings.push(`اختلاف وزن ${diff.toFixed(2)} گرم بیش از حد مجاز ${tol.toFixed(2)} گرم است.`);
-  if(cat==='ریزدانه'&&!isNaN(fm)&&Math.abs(fm-base)>.2) warnings.push('اختلاف مدول نرمی با مبنا بیش از ۰٫۲ است.');
-  if(panMismatch) warnings.push('اختلاف عبوری الک ۰٫۰۷۵ میلی‌متر با افت شستشو بیش از ۰٫۳ واحد درصد است.');
-
   const r=ranges[cls]||{};
 
   for(const s of sieves){
@@ -454,11 +471,50 @@ function calculate(){
 
   $('tvFm').textContent=cat==='ریزدانه' && !isNaN(fm) ? fm.toFixed(2) : '-';
   $('tvPassing200').textContent=total > 0 ? passing200.toFixed(2)+'%' : '-';
-  $('warnBox').textContent=warnings.join(' | ');
+
+  // ================== منطق جدید پیام‌ها ==================
+  const box = $('usageResults');
+  box.replaceChildren(); // پاک کردن پیام‌های قبلی
+  const warnBox = $('warnBox');
+  warnBox.textContent = ''; // پاک کردن هشدارهای قبلی
+
+  // اگر اختلاف وزن بیشتر از 3 دهم درصد بود:
+  if (diff > tol) {
+      // فقط و فقط این دو جمله نمایش داده شود
+      const el1 = document.createElement('div');
+      el1.className='usage-message deny'; // رنگ قرمز
+      el1.textContent = 'اختلاف وزن جمع الک‌ها با وزن بعد از شستن بیش از حد مجاز است.';
+      box.appendChild(el1);
+
+      const el2 = document.createElement('div');
+      el2.className='usage-message deny'; 
+      el2.textContent = 'از نتایج این آزمون برای اهداف پذیرش استفاده نگردد (نتیجه مردود).';
+      box.appendChild(el2);
+  } else {
+      // اختلاف مجاز بود، پس 3 جمله شرطی را نمایش بده (فارغ از مدول نرمی)
+      const pct = passing200;
+      const crushed = $('materialName').value.includes('شکسته');
+      
+      const maxNormal = crushed ? 7 : 5;
+      const maxAbrasion = crushed ? 5 : 3;
+      const maxFreeze = crushed ? 7 : 5;
+
+      function add(name, allowed){
+        const el=document.createElement('div');
+        el.className='usage-message '+(allowed?'allow':'deny');
+        el.textContent = `این سنگدانه برای استفاده در ${name} ${allowed?'مجاز است':'ممنوع است'}.`;
+        box.appendChild(el);
+      }
+
+      add('بتن مسلح و معمولی', pct <= maxNormal);
+      add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
+      add('بتن تحت سایش', pct <= maxAbrasion);
+  }
+  // =======================================================
 
   lastResult={
     weights,retained,cumulative,passing,passing200,fm,
-    total,after,cls,cat,diff,tol,panMismatch,acceptanceValid
+    total,after,cls,cat,diff,tol,hasPan
   };
 
   // ================== بررسی وضعیت پرداخت ==================
@@ -469,24 +525,20 @@ function calculate(){
           if (freeTrialCount === MAX_FREE_TRIAL) {
             alert("شما از ۱۰ بار محاسبه رایگان استفاده کردید. برای محاسبات بعدی، لطفاً برنامه را خریداری کنید.");
           }
-          
-          showUsageMessages();
           drawChart();
           return;
       } else {
           $('tvFm').textContent = '-';
           $('tvPassing200').textContent = '-';
           $('usageResults').innerHTML = '';
-          $('warnBox').textContent = '';
+          warnBox.textContent = '';
           drawChart();
-          
           showPaymentDialog();
           return;
       }
   }
   // =========================================================
 
-  showUsageMessages();
   drawChart();
 }
 
@@ -596,32 +648,6 @@ function drawChart(){
   c.fillStyle='#243c5b'; c.font='bold 11px Tahoma,Arial'; c.textAlign='center'; c.textBaseline='middle';
   c.fillText('اندازه سنگدانه (mm)',plotLeft+plotWidth/2,height-17);
   c.save(); c.translate(13,m.top+ph/2); c.rotate(-Math.PI/2); c.fillText('درصد عبوری',0,0); c.restore();
-}
-
-/* ================== اصلاح نهایی جملات شرطی ================== */
-function showUsageMessages(){
-  const box=$('usageResults');
-  box.replaceChildren(); 
-
-  if(!lastResult) return;
-
-  const pct = lastResult.passing200;
-  const crushed = $('materialName').value.includes('شکسته');
-  
-  const maxNormal = crushed ? 7 : 5;
-  const maxAbrasion = crushed ? 5 : 3;
-  const maxFreeze = crushed ? 7 : 5;
-
-  function add(name, allowed){
-    const el=document.createElement('div');
-    el.className='usage-message '+(allowed?'allow':'deny');
-    el.textContent = `این سنگدانه برای استفاده در ${name} ${allowed?'مجاز است':'ممنوع است'}.`;
-    box.appendChild(el);
-  }
-
-  add('بتن مسلح و معمولی', pct <= maxNormal);
-  add('بتن تحت شرایط ذوب و یخبندان', pct <= maxFreeze);
-  add('بتن تحت سایش', pct <= maxAbrasion);
 }
 
 function resetAll(){
