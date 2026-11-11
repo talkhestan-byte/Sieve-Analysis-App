@@ -93,6 +93,32 @@ button:hover{filter:brightness(1.09)}
   .action-bar { display: none !important; } 
   .chart-wrap { border: none !important; }
 }
+/* گزینه خرید نسخه کامل؛ ظریف و غیرمزاحم */
+.purchase-entry{
+  display:flex;
+  justify-content:center;
+  margin:-5px auto 12px;
+}
+.purchase-entry button{
+  flex:0 0 auto;
+  min-width:0;
+  padding:5px 12px;
+  border:1px solid #c8d9ec;
+  border-radius:20px;
+  background:rgba(235,245,255,.65);
+  box-shadow:none;
+  color:#496783;
+  text-shadow:none;
+  font:11px Tahoma,Arial,sans-serif;
+}
+.purchase-entry button:hover{
+  background:#e4f1ff;
+  color:#124a9c;
+  filter:none;
+}
+@media print{
+  .purchase-entry{display:none!important;}
+}
 </style>
 </head>
 
@@ -103,7 +129,11 @@ button:hover{filter:brightness(1.09)}
     <span>دانه بندی سنگدانه ریز و درشت</span>
     <small>استاندارد ملی ایران شماره های 302-406-4977</small>
   </h2>
-
+    <div class="purchase-entry">
+    <button type="button" onclick="showPaymentDialog()">
+      خرید نسخه کامل
+    </button>
+    </div>
   <div class="row">
     <div class="field"><label for="company">نام شرکت</label><input id="company" placeholder="اختیاری"></div>
     <div class="field"><label for="sampleId">شماره نمونه</label><input id="sampleId" placeholder="اختیاری"></div>
